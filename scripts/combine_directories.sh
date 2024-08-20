@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the root directory (the top level of the tree)
-ROOT_DIR="/path/to/root/directory"
+ROOT_DIR="/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/AudioCommonsTimbre/TimbralModels_v0.2_Development/"
 # Define the destination directory where all "Results" contents will be combined
 DEST_DIR="$ROOT_DIR/Combined_Results"
 
@@ -15,4 +15,3 @@ find "$ROOT_DIR" -type d -name "Results" | while read RESULTS_DIR; do
 done
 
 echo "All 'Results' directories have been combined into $DEST_DIR."
-
