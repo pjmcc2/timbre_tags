@@ -24,7 +24,9 @@ def merge_files_to_dataframe(directory):
             file_path = os.path.join(directory, filename)
             
             # Read the file into a DataFrame
-            df = pd.read_csv(file_path, delimiter='\t')  # Adjust delimiter if necessary
+            df = pd.read_csv(file_path, delimiter='\t',names=["page_number","sound_file",f"rating_{x_value}"])  # Adjust delimiter if necessary
+            df = df.drop("page_number",axis=1).sort_values("sound_file").set_index("sound_file")
+
             
             # Append or create a new entry in the dictionary for this X value
             if x_value not in data_dict:
@@ -33,7 +35,8 @@ def merge_files_to_dataframe(directory):
                 data_dict[x_value] = pd.concat([data_dict[x_value], df], ignore_index=True)
     
     # Combine all DataFrames for each X value into a single DataFrame
-    combined_df = pd.concat(data_dict.values(), keys=data_dict.keys(), names=['X'])
+    combined_df = pd.concat(data_dict.values(),axis=1,sort=False).reset_index()
+    combined_df.rename(columns = {'index':'sound_file'})
     
     return combined_df
 
@@ -48,7 +51,7 @@ def aggregate_data(df,kind='mean'):
     else:
         encoded = mean_encode(df)
         if kind == 'vote':
-            return round(sum(row)/len(row)) for _,row in encoded.iterrows()
+            return [round(sum(row)/len(row)) for _,row in encoded.iterrows()] # TODO Fix
         
 
 
