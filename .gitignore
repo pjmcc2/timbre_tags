@@ -1,3 +1,6 @@
 env
 data
 .cache
+src/timbral_models
+scripts/gen.err
+scripts/gen.out
