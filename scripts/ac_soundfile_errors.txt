@@ -1,0 +1,24 @@
+File beat-default-21-194414.wav caused error zero-size array to reduction operation minimum which has no identity
+Soundfile failed to load: /nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/AudioCommonsTimbre/TimbralModels_v0.2_Development/Boominess/Select Stimuli/Listening tests/Stimuli/tone-default-20-174416.wav
+File tone-default-20-174416.wav caused error Unable to read audio file.
+File bomb-default-6-32842.wav caused error zero-size array to reduction operation minimum which has no identity
+File squeak-default-8-235721.wav caused error zero-size array to reduction operation minimum which has no identity
+File piano-063-soft-1-176340.wav caused error Audio buffer is not finite everywhere
+File piano-soft-1-176340.wav caused error Audio buffer is not finite everywhere
+File beep-default-6-263122.wav caused error zero-size array to reduction operation minimum which has no identity
+File piano-default-12-255046.wav caused error zero-size array to reduction operation minimum which has no identity
+File hit-deep-14-72156.wav caused error zero-size array to reduction operation minimum which has no identity
+File boom-deep-2-218717.wav caused error zero-size array to reduction operation minimum which has no identity
+File voice-deep-43-418325.wav caused error zero-size array to reduction operation minimum which has no identity
+Soundfile failed to load: /nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/AudioCommonsTimbre/TimbralModels_v0.2_Development/Sharpness/Select Stimuli/Listening tests/Stimuli/synth-sharp-3-341155.wav
+File synth-sharp-3-341155.wav caused error Unable to read audio file.
+File drum-default-44-432389.wav caused error zero-size array to reduction operation minimum which has no identity
+Soundfile failed to load: /nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/AudioCommonsTimbre/TimbralModels_v0.2_Development/Sharpness/Select Stimuli/Listening tests/Stimuli/noise-default-2-179479.wav
+File noise-default-2-179479.wav caused error Unable to read audio file.
+Soundfile failed to load: /nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/AudioCommonsTimbre/TimbralModels_v0.2_Development/Sharpness/Select Stimuli/Listening tests/Stimuli/LoudnessNormalisedSourceTypes/noise/default-2-179479.wav
+File default-2-179479.wav caused error Unable to read audio file.
+File default-44-432389.wav caused error zero-size array to reduction operation minimum which has no identity
+Soundfile failed to load: /nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/AudioCommonsTimbre/TimbralModels_v0.2_Development/Sharpness/Select Stimuli/Listening tests/Stimuli/LoudnessNormalisedSourceTypes/synth/sharp-3-341155.wav
+File sharp-3-341155.wav caused error Unable to read audio file.
+File cinematic-default-10-221147.wav caused error zero-size array to reduction operation minimum which has no identity
+File default-10-221147.wav caused error zero-size array to reduction operation minimum which has no identity

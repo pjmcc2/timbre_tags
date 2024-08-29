@@ -14,7 +14,7 @@ def consilidate_wavs(directory):
                     filepath = os.path.join(root, file)
                     try:
                         result = timbral_models.timbral_extractor(filepath,verbose=False)
-                        result["sound_file"] = file
+                        result["sound_file"] = filepath # changed to filepath
                         results.append(result)
                     except Exception as e:
                         print(f"File {file} caused error {e}")
