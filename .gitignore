@@ -4,3 +4,4 @@ data
 src/timbral_models
 scripts/gen.err
 scripts/gen.out
+.neptune
