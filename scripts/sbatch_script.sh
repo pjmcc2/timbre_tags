@@ -8,7 +8,7 @@
 
 module load slurm
 source ../env/bin/activate
-python3 gen_ac_dataset.py
+python3 train_text_classifier C
 
-#SBATCH --mem=15G
+# arguments for train_text_classifier: C,L,M, or P
 

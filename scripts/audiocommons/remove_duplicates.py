@@ -46,4 +46,4 @@ if __name__ == "__main__":
             dup_ids.append(i)
 
     wav_fs = wav_fs.drop(dup_ids,axis=0)
-    pd.to_pickle(wav_fs[["id","description"]],"/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/misc/audiocommons_duplicates_dropped_descriptions.pickle")
+    pd.to_pickle(wav_fs['id'],"/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/misc/audiocommons_duplicates_dropped_ids.pickle")
