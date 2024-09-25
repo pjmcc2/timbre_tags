@@ -4,7 +4,6 @@ import torch
 import numpy as np
 import re
 from msclap import CLAP
-from datasets import load_dataset
 import json
 from torch import nn
 import os
@@ -26,7 +25,7 @@ os.environ['HF_HOME'] = CACHE_DIR
 parser = argparse.ArgumentParser(description="Trains and measures text classifier")
 parser.add_argument('label_set',type=str,help="C: Carron, L: Lavengood, M: C and L merged, P: Peter's set")
 
-
+# TODO add function strings to everything
 class EmbeddingClassifier(nn.Module):
   def __init__(self,input_dim,hidden_dim,out_classes):
     super().__init__()
@@ -54,11 +53,11 @@ def get_labels(label_set_name):
         LABEL_PATH =  "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/tags/carron_lavengood.csv"
         data = pd.read_csv(LABEL_PATH)
         if label_set_name == "C":
-            labels = pd.DataFrame(data["Carron"])
+            labels = pd.DataFrame(data["Carron"],columns=["Words"])
         elif label_set_name == "L":
-            labels = pd.DataFrame(data["Lavengood"])
+            labels = pd.DataFrame(data["Lavengood"],columns=["Words"])
         elif label_set_name == "M":
-            labels = pd.DataFrame(data["Merged"])
+            labels = pd.DataFrame(data["Merged"],columns=["Words"])
         else:
             raise ValueError(f" {label_set_name} is invalid. Must be from [C,L,M,P].")
           
@@ -66,6 +65,11 @@ def get_labels(label_set_name):
     labels["prompts"] = [gen_prompt(words) for words in labels.Words]
     return labels
 
+def match_labels(train_labels,val_labels):
+    matching_labels = set(train_labels) & set(val_labels)
+    train_ids = [i for i in range(len(train_labels)) if train_labels[i] in matching_labels]
+    val_ids = [i for i in range(len(val_labels)) if val_labels[i] in matching_labels]
+    return (matching_labels, train_ids, val_ids)
 
 def combine_json_into_dataframe(dir):
     li = []
@@ -78,16 +82,9 @@ def combine_json_into_dataframe(dir):
 
     return pd.concat(li,ignore_index=True)
     
-def gen_prompt(strings):
+def gen_prompt(strings): # TODO standardize
     """
-    Formats a list of strings into the format: 
-    "A {comma-separated string list with all but the last element}, or {last string} sound."
-
-    Parameters:
-    strings (list of str): A list of strings.
-
-    Returns:
-    str: Formatted string.
+    eg
     """
     if type(strings) == str:
         strings = strings = strings.split(",")
@@ -106,7 +103,8 @@ if __name__ == "__main__":
     run = neptune.init_run(
         project="Soundbendor/timbre-tags",
         api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJhM2FhZjQ3Yy02NmMxLTRjNzMtYjMzZC05YjM2N2FjOTgyMTEifQ==",
-        name="config_test_run"
+        name="config_test_run",
+        mode="debug"
     )   
 
     WAVCAPS_PATH = "/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/json_files/"
@@ -120,8 +118,22 @@ if __name__ == "__main__":
     labels = get_labels(args.label_set)
 
     chit_df = pd.read_pickle(CHIT_PATH)
-    ac_df = pd.read_pickle(AC_PATH)    
+    ac_df = pd.read_pickle(AC_PATH) 
+    col_name_map = { # TODO programatically/automatically find same-words?
+        "brightness": "bright",
+        "roughness": "rough",
+        "depth": "deep",
+        "hardness": "hard",
+        "sharpness":"sharp",
+        "warmth":"warm"
+    }
+    ac_df = ac_df.rename(col_name_map,axis=1)  
 
+    matching_ac_labels, train_label_idx, val_label_idx = match_labels(labels.Words,ac_df.columns)
+    print(matching_ac_labels)
+    print(labels.Words[train_label_idx])
+    print(ac_df.columns,val_label_idx)
+    exit()
     # Load CLAP, st, etc. here
     st = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
     clap = CLAP(version='2023',use_cuda=True)
@@ -163,7 +175,7 @@ if __name__ == "__main__":
 
     parameters = {
         "lr": lr,
-        "threshold": INIT_THRESH,
+        "threshold": INIT_THRESH, # TODO
         "n_classes" : len(labels),
         "metric" : "AUPRC",
         "device": device,
@@ -175,7 +187,7 @@ if __name__ == "__main__":
         run=run,
         model=classifier,
         log_model_diagram=True,
-        log_gradients=True,
+        log_gradients=False,
         log_parameters=True,
         log_freq=30,
     )
@@ -193,7 +205,7 @@ if __name__ == "__main__":
             optim.zero_grad()
             outputs = classifier(X)
             #threshold rounding
-            metric.update(outputs,y)
+            metric.update(outputs,y) # TODO research adaptive thresh. e.g. elbow of AUC
             y = (y> INIT_THRESH).float()
             loss = loss_fn(y,outputs)
                     # Log after every 30 steps
@@ -201,8 +213,8 @@ if __name__ == "__main__":
                 run[npt_logger.base_namespace]["batch/train_loss"].append(loss.item())
             loss.backward()
             optim.step()
-        scheduler.step()
-        run[npt_logger.base_namespace]["batch/train_metric"].append(metric.compute())
+        scheduler.step() 
+        run[npt_logger.base_namespace]["batch/train_metric"].append(metric.compute()) # TODO consider adding accuracy as well 
         metric.reset()
         
         classifier.eval()
@@ -212,7 +224,8 @@ if __name__ == "__main__":
                 X = X.to(device)
                 y = y.to(device)
                 outputs = classifier(X)
-                metric.update(outputs,y)
+                #get matching outputs from train to val
+                metric.update(outputs.index_select(),y)
                 loss = loss_fn(y,outputs)
 
         run[npt_logger.base_namespace]["batch/AC_epoch_loss"].append(loss.item())
@@ -225,6 +238,7 @@ if __name__ == "__main__":
                 X = X.to(device)
                 y = y.to(device)
                 outputs = classifier(X)
+                # TODO get only classes that match validation set
                 metric.update(outputs,y)
                 loss = loss_fn(y,outputs)
         
@@ -232,5 +246,5 @@ if __name__ == "__main__":
         
         run[npt_logger.base_namespace]["batch/CHIT_metric"].append(metric.compute())
         metric.reset()
-    torch.save(classifier,"tt_text_classifier.pt")
-    run["model_checkpoints/tt_text_classifier"].upload("model_checkpoints/tt_text_classifier.pt")
+    #torch.save(classifier,"tt_text_classifier.pt")
+    #run["model_checkpoints/tt_text_classifier"].upload("model_checkpoints/tt_text_classifier.pt")
