@@ -1,6 +1,6 @@
 import pandas as pd
 from msclap import CLAP
-from datasets import load_dataset
+from src import load_dataset
 import json
 import os
 

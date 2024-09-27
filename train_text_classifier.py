@@ -16,7 +16,8 @@ from neptune.utils import stringify_unsupported
 from torcheval.metrics import MultilabelAUPRC
 from src.datasets import datasets
 import argparse
-
+import time
+from tqdm import tqdm
 
 rng = default_rng(1066)
 CACHE_DIR = "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/.cache"
@@ -115,30 +116,33 @@ if __name__ == "__main__":
     AC_SIGMA = 0.1196 # 0.11958986
 
     # label processing
+    print("Loading Data...")
+    start = time.time()
     labels = get_labels(args.label_set)
 
     chit_df = pd.read_pickle(CHIT_PATH)
+    chit_df = chit_df.reindex(sorted(chit_df.columns),axis=1)
     ac_df = pd.read_pickle(AC_PATH) 
-    col_name_map = { # TODO programatically/automatically find same-words?
+    col_name_map = { # TODO programatically/automatically find same-words? Else preprocess everything
         "brightness": "bright",
         "roughness": "rough",
         "depth": "deep",
-        "hardness": "hard",
+        "hardness": "hard", # reverb?
         "sharpness":"sharp",
         "warmth":"warm"
     }
-    ac_df = ac_df.rename(col_name_map,axis=1)  
-
-    matching_ac_labels, train_label_idx, val_label_idx = match_labels(labels.Words,ac_df.columns)
-    print(matching_ac_labels)
-    print(labels.Words[train_label_idx])
-    print(ac_df.columns,val_label_idx)
-    exit()
+    ac_df = ac_df.rename(col_name_map,axis=1).reindex(sorted(ac_df.columns),axis=1) 
+    
+    _, ac_train_label_idx, ac_label_idx = match_labels(labels.Words,ac_df.columns)
+    _, chit_train_label_idx, chit_label_idx = match_labels(labels.Words,chit_df.columns)
+    print(f"Data loaded in: {(time.time()-start):.4f}s.")
+    print("Loading pretrained models...")
+    start = time.time()
     # Load CLAP, st, etc. here
     st = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
     clap = CLAP(version='2023',use_cuda=True)
     label_embeddings = st.encode(labels.prompts.to_list())
-
+    print(f"Models loaded in {(time.time()-start):.4f}s.")
     # Torch stuff here
     wavcaps = datasets.StringDatasetFromDataFrame(combine_json_into_dataframe(WAVCAPS_PATH))
 
@@ -194,16 +198,19 @@ if __name__ == "__main__":
     run[npt_logger.base_namespace]["hyperparams"] = stringify_unsupported(parameters)
 
 
-
-    for e in range(EPOCHS):
+    print("Beginning training...")
+    
+    for e in tqdm(range(EPOCHS)):
         classifier.train()
-
+        
         for i,data in enumerate(train_set):
+            # TODO 
+            break
             X,y = data
             X = X.to(device)
             y = y.to(device)
             optim.zero_grad()
-            outputs = classifier(X)
+            outputs = classifier(X) # TODO compare alignment of chit and audiocommons intersection
             #threshold rounding
             metric.update(outputs,y) # TODO research adaptive thresh. e.g. elbow of AUC
             y = (y> INIT_THRESH).float()
@@ -221,13 +228,16 @@ if __name__ == "__main__":
         with torch.no_grad():
             for j,data in enumerate(val_ac):
                 X,y = data
+                print(f"y shape before indexing: {y.shape}")
+                y = y.index_select(1,chit_label_idx)
+                print(f"y shape after: {y.shape}")
                 X = X.to(device)
                 y = y.to(device)
-                outputs = classifier(X)
-                #get matching outputs from train to val
-                metric.update(outputs.index_select(),y)
+                outputs = classifier(X).index_select(1,chit_train_label_idx)
+                #get matching outputs from train to val # TODO
+                metric.update(outputs,y)
                 loss = loss_fn(y,outputs)
-
+                exit()
         run[npt_logger.base_namespace]["batch/AC_epoch_loss"].append(loss.item())
         
         run[npt_logger.base_namespace]["batch/AC_metric"].append(metric.compute())
