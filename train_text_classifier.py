@@ -53,12 +53,15 @@ def get_labels(label_set_name):
     else:
         LABEL_PATH =  "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/tags/carron_lavengood.csv"
         data = pd.read_csv(LABEL_PATH)
+        
         if label_set_name == "C":
-            labels = pd.DataFrame(data["Carron"],columns=["Words"])
+ 
+            labels = pd.DataFrame(data["Carron"].dropna().tolist(),columns=["Words"]) 
+
         elif label_set_name == "L":
-            labels = pd.DataFrame(data["Lavengood"],columns=["Words"])
+            labels = pd.DataFrame(data["Lavengood"].dropna().tolist(),columns=["Words"])
         elif label_set_name == "M":
-            labels = pd.DataFrame(data["Merged"],columns=["Words"])
+            labels = pd.DataFrame(data["Merged"].dropna().tolist(),columns=["Words"])
         else:
             raise ValueError(f" {label_set_name} is invalid. Must be from [C,L,M,P].")
           
@@ -117,9 +120,12 @@ if __name__ == "__main__":
 
     # label processing
     print("Loading Data...")
+ 
     start = time.time()
     labels = get_labels(args.label_set)
-
+  
+    labels = labels.sort_values(by=["Words"])
+ 
     chit_df = pd.read_pickle(CHIT_PATH)
     chit_df = chit_df.reindex(sorted(chit_df.columns),axis=1)
     ac_df = pd.read_pickle(AC_PATH) 
@@ -152,14 +158,14 @@ if __name__ == "__main__":
     string_collator = datasets.DescriptionCollator(st,clap,label_embeddings)
 
    
-    ac_collator = datasets.TextFromAudioEmbeddingsCollator(clap,AC_SIGMA,rng=rng)
-    chit_collator = datasets.TextFromAudioEmbeddingsCollator(clap,CHIT_SIGMA,rng=rng)
+    ac_collator = datasets.TextFromAudioEmbeddingsCollator(AC_SIGMA,rng=rng)
+    chit_collator = datasets.TextFromAudioEmbeddingsCollator(CHIT_SIGMA,rng=rng)
 
     train_set = DataLoader(wavcaps,batch_size=128,collate_fn=string_collator)
     val_chit = DataLoader(chit,batch_size = len(chit), collate_fn=chit_collator)
     val_ac = DataLoader(ac,batch_size=128,collate_fn=ac_collator)
 
-
+    #device="cpu"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Training on: {device}")
 
@@ -200,18 +206,16 @@ if __name__ == "__main__":
 
     print("Beginning training...")
     
-    for e in tqdm(range(EPOCHS)):
+    for e in range(EPOCHS):
         classifier.train()
         
-        for i,data in enumerate(train_set):
-            # TODO 
-            break
+        for i,data in tqdm(enumerate(train_set)): # TODO precompute?
             X,y = data
             X = X.to(device)
             y = y.to(device)
             optim.zero_grad()
-            outputs = classifier(X) # TODO compare alignment of chit and audiocommons intersection
-            #threshold rounding
+            outputs = classifier(X) 
+            #threshold rounding # TODO move the thresholding to the validation set up. change loss function
             metric.update(outputs,y) # TODO research adaptive thresh. e.g. elbow of AUC
             y = (y> INIT_THRESH).float()
             loss = loss_fn(y,outputs)
@@ -237,7 +241,7 @@ if __name__ == "__main__":
                 #get matching outputs from train to val # TODO
                 metric.update(outputs,y)
                 loss = loss_fn(y,outputs)
-                exit()
+                exit() ###################
         run[npt_logger.base_namespace]["batch/AC_epoch_loss"].append(loss.item())
         
         run[npt_logger.base_namespace]["batch/AC_metric"].append(metric.compute())
