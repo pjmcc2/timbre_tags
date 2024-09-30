@@ -215,8 +215,8 @@ if __name__ == "__main__":
             y = y.to(device)
             optim.zero_grad()
             outputs = classifier(X) 
-            #threshold rounding # TODO move the thresholding to the validation set up. change loss function
-            metric.update(outputs,y) # TODO research adaptive thresh. e.g. elbow of AUC
+            #threshold rounding # TODO move the thresholding to the validation set up. change loss function to Xentropy, then choose final thresh based on validation.
+            metric.update(outputs,y) 
             y = (y> INIT_THRESH).float()
             loss = loss_fn(y,outputs)
                     # Log after every 30 steps
