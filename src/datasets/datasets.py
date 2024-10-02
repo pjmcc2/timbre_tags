@@ -89,5 +89,10 @@ class TextFromAudioEmbeddingsCollator():
         self.rng = rng if rng else default_rng(seed)
 
     def __call__(self,batch):
-        pseudo_text_embeddings = batch + self.rng.normal(0,self.sigma,batch.shape)
+        batch = torch.tensor(batch)
+        #debug
+        print(batch)
+        print(type(batch))
+        
+        pseudo_text_embeddings = batch + self.rng.normal(0,self.s,batch.shape)
         return pseudo_text_embeddings

@@ -1,0 +1,30 @@
+WAVCAPS
+Carron:
+unigrams ={'high': 1314, 'low': 1301, 'loud': 827, 'weak': 25, 'tonal': 39, 'noisy': 828, 'long': 631, 'short': 1252, 'dynamic': 48, 'natural': 213,
+            'artificial': 65, 'near': 2129, 'far': 162, 'continuous': 107, 'discontinuous': 0, 'constant': 227, 'fluctuating': 10, 'crescendo': 24, 'decrescendo': 0,
+            'ascending': 66, 'descending': 123, 'resonant': 112,'matte': 1, 'smooth': 85, 'rough': 148, 'bright': 76, 'dull': 35, 'nasal': 8, 'rich': 25, 'round': 50,
+            'warm': 82, 'metallic': 676, 'strident': 25}
+bigrams = {('slow', 'attack'): 2, ('fast', 'attack'): 1}.. likely doesnt account for punctiation.
+
+parts of speech = Counter({'NN': 703832, 'VBG': 322447, 'JJ': 293176, 'VBZ': 262207, 'IN': 246057, 'NNS': 222415, 'DT': 200752, 'CC': 177686, 
+                            'VBP': 137559, ',': 132875, 'VBN': 82702, 'VB': 20097, 'RB': 17172, 'MD': 11273, '.': 10997, 'NNP': 9565, 'TO': 7514,
+                             'RP': 6628, '``': 5205, 'PRP$': 5165, 'VBD': 4981, 'POS': 3461, 'EX': 3446, 'JJR': 2992, "''": 2879, 'PRP': 2549, 
+                             'CD': 1486, 'RBR': 1062, 'FW': 474, 'JJS': 451, 'WDT': 391, 'WRB': 348, 'WP': 229, ':': 213, ')': 200,
+                              '(': 199, 'UH': 101, 'PDT': 48, '#': 37, 'RBS': 33, 'NNPS': 15, 'SYM': 6, '$': 3, 'WP$': 1}) 
+total adjective = JJ + JJR + JJS  = 293176 + 2992 + 451 = 296619
+total tokens = 2900929
+adjective prop = 0.102 approx 10%
+total_tag_count = 10714 + 3 = 10717
+tag adjective prop = 0.0361 approx 3.6%
+
+adj count stats:    mean          0.427401
+                    std           0.671796
+                    min           0.000000
+                    25%           0.000000
+                    50%           0.000000
+                    75%           1.000000
+                    max           7.000000
+
+Lavengood
+-----------------------------
+Lp-MusCaps

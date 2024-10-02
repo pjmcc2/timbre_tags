@@ -19,6 +19,9 @@ import argparse
 import time
 from tqdm import tqdm
 
+#TODO add data parallelism (distributed)
+
+
 rng = default_rng(1066)
 CACHE_DIR = "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/.cache"
 os.environ['HF_HOME'] = CACHE_DIR
@@ -161,7 +164,7 @@ if __name__ == "__main__":
     ac_collator = datasets.TextFromAudioEmbeddingsCollator(AC_SIGMA,rng=rng)
     chit_collator = datasets.TextFromAudioEmbeddingsCollator(CHIT_SIGMA,rng=rng)
 
-    train_set = DataLoader(wavcaps,batch_size=128,collate_fn=string_collator)
+    train_set = DataLoader(wavcaps,batch_size=256,collate_fn=string_collator)
     val_chit = DataLoader(chit,batch_size = len(chit), collate_fn=chit_collator)
     val_ac = DataLoader(ac,batch_size=128,collate_fn=ac_collator)
 
@@ -176,7 +179,7 @@ if __name__ == "__main__":
     INIT_THRESH = 0.02175 # TODO apply thresh search over validation set
     lr = 0.0001
     thresh_values = [INIT_THRESH]
-    loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = nn.CrossEntropyLoss()
     optim = Adam(classifier.parameters(),lr=lr)
     metric = MultilabelAUPRC(num_labels=len(labels))
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optim,0.9)
@@ -210,20 +213,23 @@ if __name__ == "__main__":
         classifier.train()
         
         for i,data in tqdm(enumerate(train_set)): # TODO precompute?
+            
             X,y = data
             X = X.to(device)
             y = y.to(device)
             optim.zero_grad()
             outputs = classifier(X) 
             #threshold rounding # TODO move the thresholding to the validation set up. change loss function to Xentropy, then choose final thresh based on validation.
-            metric.update(outputs,y) 
-            y = (y> INIT_THRESH).float()
+            metric.update(outputs,y) # TODO check
+            
             loss = loss_fn(y,outputs)
                     # Log after every 30 steps
             if i % 30 == 0:
                 run[npt_logger.base_namespace]["batch/train_loss"].append(loss.item())
             loss.backward()
             optim.step()
+            #TODO
+            break
         scheduler.step() 
         run[npt_logger.base_namespace]["batch/train_metric"].append(metric.compute()) # TODO consider adding accuracy as well 
         metric.reset()
@@ -239,6 +245,7 @@ if __name__ == "__main__":
                 y = y.to(device)
                 outputs = classifier(X).index_select(1,chit_train_label_idx)
                 #get matching outputs from train to val # TODO
+                # y = (y> INIT_THRESH).float()
                 metric.update(outputs,y)
                 loss = loss_fn(y,outputs)
                 exit() ###################
