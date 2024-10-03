@@ -72,27 +72,24 @@ class AudioEmbeddingsDataset(Dataset):
     def __len__(self):
         return len(self.df)
 
-    def __getitem__(self, idx, return_path=False):
+    def __getitem__(self, idx):
         audio = self.df.embeddings.iloc[idx]
-        if self.transform:
+        classes = self.df.drop(["embeddings","path"],axis=1).iloc[idx]                                                    
+        if self.transform:  
             audio = self.transform(audio)
-        if return_path:
-            path = self.df.path.iloc[idx]
-            return path, audio
-        else:
-            return audio
+        return audio, classes
 
 
-class TextFromAudioEmbeddingsCollator():
+class TextFromAudioEmbeddingsCollator(): # TODO account for tuple
     def __init__(self,sigma,rng=None,seed=1066):
         self.s = sigma
         self.rng = rng if rng else default_rng(seed)
 
     def __call__(self,batch):
-        batch = torch.tensor(batch)
-        #debug
-        print(batch)
-        print(type(batch))
-        
+        audio,labels = zip(*batch)
+        batch = torch.stack(audio)
+        labels = torch.tensor(labels)
+        print(batch.dtype)
         pseudo_text_embeddings = batch + self.rng.normal(0,self.s,batch.shape)
-        return pseudo_text_embeddings
+        print(pseudo_text_embeddings.device)
+        return pseudo_text_embeddings.float(), labels

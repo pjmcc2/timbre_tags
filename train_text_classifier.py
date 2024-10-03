@@ -132,6 +132,7 @@ if __name__ == "__main__":
     chit_df = pd.read_pickle(CHIT_PATH)
     chit_df = chit_df.reindex(sorted(chit_df.columns),axis=1)
     ac_df = pd.read_pickle(AC_PATH) 
+ 
     col_name_map = { # TODO programatically/automatically find same-words? Else preprocess everything
         "brightness": "bright",
         "roughness": "rough",
@@ -140,10 +141,18 @@ if __name__ == "__main__":
         "sharpness":"sharp",
         "warmth":"warm"
     }
-    ac_df = ac_df.rename(col_name_map,axis=1).reindex(sorted(ac_df.columns),axis=1) 
-    
-    _, ac_train_label_idx, ac_label_idx = match_labels(labels.Words,ac_df.columns)
-    _, chit_train_label_idx, chit_label_idx = match_labels(labels.Words,chit_df.columns)
+    ac_df = ac_df.rename(col_name_map,axis=1)
+    ac_df = ac_df.reindex(sorted(ac_df.columns),axis=1) 
+
+    ac_matching_labels, ac_train_label_idx, ac_label_idx = match_labels(labels.Words,ac_df.drop(["embeddings","path"],axis=1).columns)
+    _, chit_train_label_idx, chit_label_idx = match_labels(labels.Words,chit_df.drop(["embeddings","path"],axis=1).columns)
+    ac_train_label_idx,ac_label_idx = torch.tensor(ac_train_label_idx), torch.tensor(ac_label_idx)
+
+    #print(ac_matching_labels)
+    #print(f"train label ids: {ac_train_label_idx}, train cols: {labels}")
+    #print(f"ac label ids: {ac_label_idx}, ac cols: {ac_df.columns}")
+
+
     print(f"Data loaded in: {(time.time()-start):.4f}s.")
     print("Loading pretrained models...")
     start = time.time()
@@ -166,7 +175,7 @@ if __name__ == "__main__":
 
     train_set = DataLoader(wavcaps,batch_size=256,collate_fn=string_collator)
     val_chit = DataLoader(chit,batch_size = len(chit), collate_fn=chit_collator)
-    val_ac = DataLoader(ac,batch_size=128,collate_fn=ac_collator)
+    val_ac = DataLoader(ac,batch_size=4,collate_fn=ac_collator) # TODO batch size
 
     #device="cpu"
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -236,14 +245,15 @@ if __name__ == "__main__":
         
         classifier.eval()
         with torch.no_grad():
-            for j,data in enumerate(val_ac):
+            for j,data in enumerate(val_ac):# TODO check datasets.py
                 X,y = data
-                print(f"y shape before indexing: {y.shape}")
-                y = y.index_select(1,chit_label_idx)
-                print(f"y shape after: {y.shape}")
+
+                y = y.index_select(1,ac_label_idx)
+
                 X = X.to(device)
+                print(X.dtype)
                 y = y.to(device)
-                outputs = classifier(X).index_select(1,chit_train_label_idx)
+                outputs = classifier(X).index_select(1,ac_train_label_idx)
                 #get matching outputs from train to val # TODO
                 # y = (y> INIT_THRESH).float()
                 metric.update(outputs,y)
@@ -257,6 +267,7 @@ if __name__ == "__main__":
             for j,data in enumerate(val_chit):
                 X,y = data
                 X = X.to(device)
+                print(X.device,device)
                 y = y.to(device)
                 outputs = classifier(X)
                 # TODO get only classes that match validation set
