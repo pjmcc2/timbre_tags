@@ -87,9 +87,9 @@ class TextFromAudioEmbeddingsCollator(): # TODO account for tuple
 
     def __call__(self,batch):
         audio,labels = zip(*batch)
+        print(f"audio: {audio}")
+        print(f"labels: {labels}")
         batch = torch.stack(audio)
         labels = torch.tensor(labels)
-        print(batch.dtype)
         pseudo_text_embeddings = batch + self.rng.normal(0,self.s,batch.shape)
-        print(pseudo_text_embeddings.device)
         return pseudo_text_embeddings.float(), labels

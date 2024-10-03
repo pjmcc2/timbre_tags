@@ -116,10 +116,14 @@ if __name__ == "__main__":
 
     WAVCAPS_PATH = "/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/json_files/"
     AC_PATH = "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/audiocommons/ac_dataset.pickle"
-    CHIT_PATH = "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/chit/chit_dataset.pickle"
+    CHIT_PATH = "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/chit/chit_dataset_torch.pickle"
 
     CHIT_SIGMA = 0.0544  # 0.054389693
     AC_SIGMA = 0.1196 # 0.11958986
+
+    #device="cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Running on: {device}")
 
     # label processing
     print("Loading Data...")
@@ -145,8 +149,10 @@ if __name__ == "__main__":
     ac_df = ac_df.reindex(sorted(ac_df.columns),axis=1) 
 
     ac_matching_labels, ac_train_label_idx, ac_label_idx = match_labels(labels.Words,ac_df.drop(["embeddings","path"],axis=1).columns)
-    _, chit_train_label_idx, chit_label_idx = match_labels(labels.Words,chit_df.drop(["embeddings","path"],axis=1).columns)
-    ac_train_label_idx,ac_label_idx = torch.tensor(ac_train_label_idx), torch.tensor(ac_label_idx)
+    chit_matching_labels, chit_train_label_idx, chit_label_idx = match_labels(labels.Words,chit_df.drop(["embeddings","path"],axis=1).columns)
+    ac_train_label_idx,ac_label_idx = torch.tensor(ac_train_label_idx).to(device), torch.tensor(ac_label_idx).to(device)
+    chit_train_label_idx, chit_label_idx = torch.tensor(chit_train_label_idx).to(device), torch.tensor(chit_label_idx).to(device)
+
 
     #print(ac_matching_labels)
     #print(f"train label ids: {ac_train_label_idx}, train cols: {labels}")
@@ -175,11 +181,9 @@ if __name__ == "__main__":
 
     train_set = DataLoader(wavcaps,batch_size=256,collate_fn=string_collator)
     val_chit = DataLoader(chit,batch_size = len(chit), collate_fn=chit_collator)
-    val_ac = DataLoader(ac,batch_size=4,collate_fn=ac_collator) # TODO batch size
+    val_ac = DataLoader(ac,batch_size=256,collate_fn=ac_collator) 
 
-    #device="cpu"
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Training on: {device}")
+ 
 
 
     classifier = EmbeddingClassifier(1024,512,len(labels.Words)).to(device)
@@ -190,7 +194,9 @@ if __name__ == "__main__":
     thresh_values = [INIT_THRESH]
     loss_fn = nn.CrossEntropyLoss()
     optim = Adam(classifier.parameters(),lr=lr)
-    metric = MultilabelAUPRC(num_labels=len(labels))
+    train_metric = MultilabelAUPRC(num_labels=len(labels))
+    ac_metric = MultilabelAUPRC(num_labels=len(ac_matching_labels))
+    chit_metric = MultilabelAUPRC(num_labels=len(chit_matching_labels))
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optim,0.9)
 
  
@@ -229,7 +235,7 @@ if __name__ == "__main__":
             optim.zero_grad()
             outputs = classifier(X) 
             #threshold rounding # TODO move the thresholding to the validation set up. change loss function to Xentropy, then choose final thresh based on validation.
-            metric.update(outputs,y) # TODO check
+            train_metric.update(outputs,y) # TODO check
             
             loss = loss_fn(y,outputs)
                     # Log after every 30 steps
@@ -240,43 +246,40 @@ if __name__ == "__main__":
             #TODO
             break
         scheduler.step() 
-        run[npt_logger.base_namespace]["batch/train_metric"].append(metric.compute()) # TODO consider adding accuracy as well 
-        metric.reset()
+        run[npt_logger.base_namespace]["batch/train_metric"].append(train_metric.compute()) # TODO consider adding accuracy as well 
+        train_metric.reset()
         
         classifier.eval()
         with torch.no_grad():
             for j,data in enumerate(val_ac):# TODO check datasets.py
                 X,y = data
-
-                y = y.index_select(1,ac_label_idx)
-
                 X = X.to(device)
-                print(X.dtype)
                 y = y.to(device)
+                y = y.index_select(1,ac_label_idx)
                 outputs = classifier(X).index_select(1,ac_train_label_idx)
                 #get matching outputs from train to val # TODO
                 # y = (y> INIT_THRESH).float()
-                metric.update(outputs,y)
+                ac_metric.update(outputs,y)
                 loss = loss_fn(y,outputs)
-                exit() ###################
+                # TODO
+                break
         run[npt_logger.base_namespace]["batch/AC_epoch_loss"].append(loss.item())
         
-        run[npt_logger.base_namespace]["batch/AC_metric"].append(metric.compute())
-        metric.reset()
+        run[npt_logger.base_namespace]["batch/AC_metric"].append(ac_metric.compute())
+        ac_metric.reset()
         with torch.no_grad():
             for j,data in enumerate(val_chit):
                 X,y = data
                 X = X.to(device)
-                print(X.device,device)
                 y = y.to(device)
-                outputs = classifier(X)
-                # TODO get only classes that match validation set
-                metric.update(outputs,y)
+                y = y.index_select(1,chit_label_idx)
+                outputs = classifier(X).index_select(1,chit_train_label_idx)
+                chit_metric.update(outputs,y)
                 loss = loss_fn(y,outputs)
-        
+                exit() ################### TODO
         run[npt_logger.base_namespace]["batch/CHIT_epoch_loss"].append(loss.item())
         
-        run[npt_logger.base_namespace]["batch/CHIT_metric"].append(metric.compute())
-        metric.reset()
+        run[npt_logger.base_namespace]["batch/CHIT_metric"].append(chit_metric.compute())
+        chit_metric.reset()
     #torch.save(classifier,"tt_text_classifier.pt")
     #run["model_checkpoints/tt_text_classifier"].upload("model_checkpoints/tt_text_classifier.pt")

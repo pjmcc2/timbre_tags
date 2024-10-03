@@ -8,3 +8,4 @@ scripts/gen.out
 .ipynb_checkpoints
 .pytest_cache
 text.text
+scratch.py
