@@ -47,57 +47,97 @@ class EmbeddingClassifier(nn.Module):
     return self.map(x)
 
 def get_labels(label_set_name):
-    if label_set_name == "P":
-        LABEL_PATH = '/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/tags/timbre_classes_draft.txt' # TODO update labels
-        with open(LABEL_PATH, 'r') as file:
-            lines = file.readlines()
-        data = [line.strip() for line in lines]
-        labels = pd.DataFrame(data,columns=["Words"])
-    else:
-        LABEL_PATH =  "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/tags/carron_lavengood.csv"
-        data = pd.read_csv(LABEL_PATH)
-        
-        if label_set_name == "C":
- 
-            labels = pd.DataFrame(data["Carron"].dropna().tolist(),columns=["Words"]) 
 
-        elif label_set_name == "L":
-            labels = pd.DataFrame(data["Lavengood"].dropna().tolist(),columns=["Words"])
-        elif label_set_name == "M":
-            labels = pd.DataFrame(data["Merged"].dropna().tolist(),columns=["Words"])
-        else:
-            raise ValueError(f" {label_set_name} is invalid. Must be from [C,L,M,P].")
+    LABEL_PATH =  "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/tags/carron_lavengood.csv"
+    data = pd.read_csv(LABEL_PATH)
+    
+    if label_set_name == "C":
+
+        labels = pd.DataFrame(data["Carron"].dropna().tolist(),columns=["Words"]) 
+
+    elif label_set_name == "L":
+        labels = pd.DataFrame(data["Lavengood"].dropna().tolist(),columns=["Words"])
+    elif label_set_name == "M":
+        labels = pd.DataFrame(data["Merged"].dropna().tolist(),columns=["Words"])
+    else:
+        raise ValueError(f" {label_set_name} is invalid. Must be from [C,L,M].")
           
     labels["Words"] = [re.sub('\*','',words) for words in labels.Words] # remove any * characters
     labels["prompts"] = [gen_prompt(words) for words in labels.Words]
     return labels
 
-def match_labels(train_labels,val_labels):
+def match_labels(train_labels, val_labels, enforce_sorted=True):
+    """
+    Find intersection between train_labels and val_labels, returning:
+    - matching_labels: the intersection of both lists
+    - train_ids: indices in train_labels where matching_labels occur
+    - val_ids: indices in val_labels where matching_labels occur
+    
+    enforce_sorted: if True, ensures the input lists are sorted
+    """
+    if enforce_sorted and (train_labels != sorted(train_labels) or val_labels != sorted(val_labels)):
+        raise ValueError("Input lists must be sorted if enforce_sorted is True.")
+    
+        # Ensure that both label sets have matching data types
+    if not all(isinstance(item, type(train_labels[0])) for item in train_labels):
+        raise TypeError("All elements in train_labels must be of the same type.")
+    if not all(isinstance(item, type(val_labels[0])) for item in val_labels):
+        raise TypeError("All elements in val_labels must be of the same type.")
+    
+    if type(train_labels[0]) != type(val_labels[0]):
+        raise TypeError("train_labels and val_labels must contain elements of the same type.")
+    
     matching_labels = set(train_labels) & set(val_labels)
     train_ids = [i for i in range(len(train_labels)) if train_labels[i] in matching_labels]
     val_ids = [i for i in range(len(val_labels)) if val_labels[i] in matching_labels]
+    
     return (matching_labels, train_ids, val_ids)
 
 def combine_json_into_dataframe(dir):
+    """
+    Combines a set of JSON files in a given directory into a single pandas DataFrame.
+    Assumes that each JSON file contains a 'data' field that is a list of dictionaries.
+    
+    Parameters:
+    dir (str): Path to the directory containing JSON files.
+
+    Returns:
+    pd.DataFrame: A concatenated DataFrame containing all data from the 'data' fields in the JSON files.
+    
+    Raises:
+    ValueError: If a file does not contain the expected 'data' field.
+    """
     li = []
+    
     for filename in os.listdir(dir):
         if filename.endswith(".json"):
             filepath = os.path.join(dir, filename)
             with open(filepath) as f:
-                df = pd.DataFrame(json.load(f)['data'])
-                li.append(df)
+                try:
+                    json_content = json.load(f)
+                    if 'data' not in json_content:
+                        raise ValueError(f"File {filename} does not contain the 'data' field.")
+                    df = pd.DataFrame(json_content['data'])
+                    li.append(df)
+                except json.JSONDecodeError:
+                    raise ValueError(f"File {filename} is not a valid JSON file.")
+    
+    if not li:
+        return pd.DataFrame()  # Return empty DataFrame if no valid data was found
+    
+    return pd.concat(li, ignore_index=True)
+    
+def gen_prompt(strings): 
+    """
+    Takes a string (or list of strings) and generates a descriptive sound prompt.
+    """
+    if isinstance(strings, str):
+        strings = strings.split(",")
 
-    return pd.concat(li,ignore_index=True)
-    
-def gen_prompt(strings): # TODO standardize
-    """
-    eg
-    """
-    if type(strings) == str:
-        strings = strings = strings.split(",")
-    if not strings:
+    strings = [s.strip() for s in strings]  # Clean up whitespace
+    if not strings or len(strings) == 0:
         raise ValueError("No strings found in list.")
-    
+
     if len(strings) == 1:
         return f"A {strings[0]} sound."
 
