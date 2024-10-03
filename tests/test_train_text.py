@@ -25,7 +25,8 @@ def test_gen_prompt_with_list():
 
 def test_gen_prompt_empty_string():
     with pytest.raises(ValueError, match="No strings found in list."):
-        gen_prompt("")
+        r = gen_prompt("")
+        print(f"result: {r}")
 
 def test_gen_prompt_empty_list():
     with pytest.raises(ValueError, match="No strings found in list."):
@@ -38,12 +39,14 @@ def test_gen_prompt_strip_spaces():
     assert gen_prompt(" bell ,  whistle , drum ") == "A bell, whistle, or drum sound."
 
 def test_gen_prompt_with_list_of_doubles():
-    assert gen_prompt(["bell", "whistle, warm"]) == "A bell, whistle, or warm sound."
+    r = gen_prompt(["bell", "whistle, warm"])
+    print(f"result: {r}")
+    assert  r == "A bell, whistle, or warm sound."
 
 
 ############### get_labels tests ######################
 
-@patch('builtins.open', new_callable=mock_open, read_data="Label1\nLabel2\nLabel3")
+# @patch('builtins.open', new_callable=mock_open, read_data="Label1\nLabel2\nLabel3")
 @patch('pandas.read_csv')
 def test_get_labels_C(mock_read_csv):
     # Simulate the CSV content for 'Carron'
@@ -131,11 +134,9 @@ def test_match_labels_empty_lists():
     train_labels = []
     val_labels = []
     
-    matching_labels, train_ids, val_ids = match_labels(train_labels, val_labels)
+    with pytest.raises(ValueError, match="One or more empty lists."):
+        match_labels(train_labels, val_labels)
     
-    assert matching_labels == set()  # No matching labels
-    assert train_ids == []           # No indices
-    assert val_ids == []
 
 def test_match_labels_same_type():
     train_labels = ["apple", "banana", "cherry"]

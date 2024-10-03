@@ -75,10 +75,11 @@ def match_labels(train_labels, val_labels, enforce_sorted=True):
     
     enforce_sorted: if True, ensures the input lists are sorted
     """
-    if enforce_sorted and (train_labels != sorted(train_labels) or val_labels != sorted(val_labels)):
-        raise ValueError("Input lists must be sorted if enforce_sorted is True.")
     
-        # Ensure that both label sets have matching data types
+    if len(train_labels) == 0 or len(val_labels) == 0:
+        raise ValueError("One or more empty lists.")
+
+            # Ensure that both label sets have matching data types
     if not all(isinstance(item, type(train_labels[0])) for item in train_labels):
         raise TypeError("All elements in train_labels must be of the same type.")
     if not all(isinstance(item, type(val_labels[0])) for item in val_labels):
@@ -86,6 +87,13 @@ def match_labels(train_labels, val_labels, enforce_sorted=True):
     
     if type(train_labels[0]) != type(val_labels[0]):
         raise TypeError("train_labels and val_labels must contain elements of the same type.")
+    
+    
+    
+    if enforce_sorted and (train_labels != sorted(train_labels) or val_labels != sorted(val_labels)):
+        raise ValueError("Input lists must be sorted if enforce_sorted is True.")
+    
+
     
     matching_labels = set(train_labels) & set(val_labels)
     train_ids = [i for i in range(len(train_labels)) if train_labels[i] in matching_labels]
@@ -133,6 +141,7 @@ def gen_prompt(strings):
     """
     if isinstance(strings, str):
         strings = strings.split(",")
+        strings = [s for s in strings if len(s) > 0]
 
     strings = [s.strip() for s in strings]  # Clean up whitespace
     if not strings or len(strings) == 0:
