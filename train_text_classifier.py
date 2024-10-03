@@ -14,7 +14,7 @@ import neptune
 from neptune_pytorch import NeptuneLogger
 from neptune.utils import stringify_unsupported
 from torcheval.metrics import MultilabelAUPRC
-from src.datasets import datasets
+from src import datasets
 import argparse
 import time
 from tqdm import tqdm

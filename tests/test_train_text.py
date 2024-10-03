@@ -5,10 +5,10 @@ import re
 import tempfile
 import os
 import json
-from ..train_text_classifier import get_labels
-from ..train_text_classifier import gen_prompt
-from ..train_text_classifier import match_labels
-from ..train_text_classifier import combine_json_into_dataframe
+from train_text_classifier import get_labels
+from train_text_classifier import gen_prompt
+from train_text_classifier import match_labels
+from train_text_classifier import combine_json_into_dataframe
 
 ############### gen_prompt tests ####################
 def test_gen_prompt_single_string():
@@ -236,6 +236,8 @@ def test_combine_json_into_dataframe_non_json_files():
         # Check that only the valid JSON data is loaded
         expected_df = pd.DataFrame({"col1": [1], "col2": [2]})
         pd.testing.assert_frame_equal(df, expected_df)
+
+
 
 
 

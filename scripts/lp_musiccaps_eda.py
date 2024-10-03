@@ -1,6 +1,6 @@
-from dataset_eda import count_bigrams
-from dataset_eda import count_tags
-from dataset_eda import contains_two_words
+from scripts.dataset_eda import count_bigrams
+from scripts.dataset_eda import count_tags
+from scripts.dataset_eda import contains_two_words
 from datasets import load_dataset
 from datasets import load_dataset_builder
 
