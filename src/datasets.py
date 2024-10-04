@@ -31,9 +31,7 @@ class DescriptionCollator():
       with torch.no_grad():
         comparison_embeddings = self.label_encoder.encode(batch)
         train_embeddings = self.tencoder.get_text_embeddings(batch).unsqueeze(1)
-        print(train_embeddings.shape,comparison_embeddings.shape)
         labels = softmax(self.label_encoder.similarity(self.label_embeddings,comparison_embeddings),dim=1).unsqueeze(1).transpose(2,0)
-      #print(train_embeddings.shape,labels.shape)
       return train_embeddings.squeeze(), labels.squeeze()
     
 
@@ -83,16 +81,16 @@ class AudioEmbeddingsDataset(Dataset):
         return audio, classes
 
 
-class TextFromAudioEmbeddingsCollator(): # TODO account for tuple
+class TextFromAudioEmbeddingsCollator(): 
     def __init__(self,sigma,rng=None,seed=1066):
         self.s = sigma
         self.rng = rng if rng else default_rng(seed)
 
     def __call__(self,batch):
         audio,labels = zip(*batch)
-        print(f"audio: {audio}")
-        print(f"labels: {labels}")
+
         batch = torch.stack(audio)
-        labels = torch.tensor([list(label.iloc) for label in labels], dtype=torch.int64)
+        labels = [label.astype(int) for label in labels]
+        labels = torch.tensor([list(label.iloc) for label in labels], dtype=torch.float32)
         pseudo_text_embeddings = batch + self.rng.normal(0,self.s,batch.shape)
         return pseudo_text_embeddings.float(), labels

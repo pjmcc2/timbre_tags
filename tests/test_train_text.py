@@ -93,6 +93,16 @@ def test_invalid_label_set():
 
 ################## match_labels tests ####################
 
+def test_match_labels_with_series_matches():
+    train_labels = pd.Series(["apple", "banana", "cherry"],name="train")
+    val_labels = pd.Series(["banana", "cherry", "date"],name="val")
+    
+    matching_labels, train_ids, val_ids = match_labels(train_labels, val_labels)
+    
+    assert matching_labels == {"banana", "cherry"}
+    assert train_ids == [1, 2]  # Indices of "banana" and "cherry" in train_labels
+    assert val_ids == [0, 1]    # Indices of "banana" and "cherry" in val_labels
+
 def test_match_labels_with_matches():
     train_labels = ["apple", "banana", "cherry"]
     val_labels = ["banana", "cherry", "date"]
@@ -102,6 +112,7 @@ def test_match_labels_with_matches():
     assert matching_labels == {"banana", "cherry"}
     assert train_ids == [1, 2]  # Indices of "banana" and "cherry" in train_labels
     assert val_ids == [0, 1]    # Indices of "banana" and "cherry" in val_labels
+
 
 def test_match_labels_no_matches():
     train_labels = ["apple", "banana"]
