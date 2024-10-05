@@ -1,11 +1,0 @@
-INFO:root:Running on: cuda
-INFO:root:Loading Data...
-INFO:root:Loading pretrained models...
-INFO:sentence_transformers.SentenceTransformer:Use pytorch device_name: cuda
-INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: sentence-transformers/all-MiniLM-L12-v2
-Batches:   0%|          | 0/2 [00:00<?, ?it/s]Batches:  50%|█████     | 1/2 [00:00<00:00,  1.34it/s]Batches: 100%|██████████| 2/2 [00:00<00:00,  2.66it/s]
-INFO:root:Epoch 1/1
-Batches:   0%|          | 0/8 [00:00<?, ?it/s]Batches: 100%|██████████| 8/8 [00:00<00:00, 115.94it/s]
-INFO:root:Train Loss: 0.0005, Metric: 0.0000
-INFO:root:Validation AC Loss: 1.8639, Metric: 0.5446
-INFO:root:Validation CHIT Loss: 5.2372, Metric: 0.6151

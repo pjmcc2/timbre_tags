@@ -1,10 +1,11 @@
 #!/bin/bash
 #
+#SBATCH --partition=dgx2
 #SBATCH --job-name=CLAP_text
-#SBATCH --gres=gpu:1
-#SBATCH --mem=6G
-#SBATCH -o gen.out
-#SBATCH -e gen.err
+#SBATCH --gres=gpu:2
+#SBATCH --mem-per-gpu=5G
+#SBATCH -o scripts/gen.out
+#SBATCH -e scripts/gen.err
 
 module load slurm
 source env/bin/activate

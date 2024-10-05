@@ -14,6 +14,7 @@ import neptune
 from neptune_pytorch import NeptuneLogger
 from neptune.utils import stringify_unsupported
 from torcheval.metrics import MultilabelAUPRC
+from torcheval.metrics import MeanSquaredError
 from src import datasets
 import argparse
 import time
@@ -23,10 +24,11 @@ import logging
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data.distributed import DistributedSampler
 
-# TODO add data parallelism (distributed)
+# TODO add data parallelism model checkpoints
 # TODO make sure logger works with neptune
-# TODO make sure metrics are computed correctly
+# TODO determine label thresh
 # TODO add type hints ot everything
 # TODO add new tests
 # TODO add docstrings 
@@ -57,7 +59,8 @@ class EmbeddingClassifier(nn.Module):
         nn.Linear(self.input_dim,self.hidden_dim),
         nn.ReLU(),
         nn.LayerNorm(self.hidden_dim),
-        nn.Linear(self.hidden_dim,self.num_classes)
+        nn.Linear(self.hidden_dim,self.num_classes),
+        nn.Softmax()
     )
 
   def forward(self,x):
@@ -93,8 +96,11 @@ class Logger:
         """Logs model information like architecture diagram."""
         self.run[self.base_namespace]["model/architecture"] = model.__str__()
 
+    def log_model_checkpoint(self,checkpoint):
+        self.run[f"model_checkpoints/state_dicts"].upload(f"model_checkpoints/{checkpoint}")
+
     def end_run(self):
-        run.stop()
+        self.run.stop()
   
 
 def setup(rank, world_size):
@@ -135,7 +141,7 @@ def check_list(input_data):
         raise TypeError(f"Input of type {type(input_data)} is not supported.")
 
 
-def match_labels(train_labels, val_labels, enforce_sorted=True):
+def match_labels(train_labels, val_labels, enforce_sorted=True): # TODO check this with tests
     """
     Find intersection between train_labels and val_labels, returning:
     - matching_labels: the intersection of both lists
@@ -252,11 +258,16 @@ def create_collators(st, clap, label_embeddings, ac_sigma, chit_sigma, rng):
     chit_collator = datasets.TextFromAudioEmbeddingsCollator(chit_sigma, rng=rng)
     return string_collator, ac_collator, chit_collator
 
+def create_samplers(train_dataset,chit,ac,world_size,rank):
+    train_sampler=DistributedSampler(train_dataset, num_replicas=world_size, rank=rank)
+    chit_sampler = DistributedSampler(chit, num_replicas=world_size, rank=rank,shuffle=False)
+    ac_sampler = DistributedSampler(ac, num_replicas=world_size, rank=rank,shuffle=False)
+    return train_sampler, chit_sampler, ac_sampler
 
-def create_dataloaders(captions, chit, ac, string_collator, chit_collator, ac_collator, batch_size,sampler=None):
-    train_set = DataLoader(captions, batch_size=batch_size, collate_fn=string_collator,sampler=sampler)
-    val_chit = DataLoader(chit, batch_size=len(chit), collate_fn=chit_collator,sampler=sampler)
-    val_ac = DataLoader(ac, batch_size=batch_size, collate_fn=ac_collator,sampler=sampler)
+def create_dataloaders(captions, chit, ac, string_collator, chit_collator, ac_collator,train_sampler, chit_sampler,ac_sampler, batch_size):
+    train_set = DataLoader(captions, batch_size=batch_size, collate_fn=string_collator,sampler=train_sampler)
+    val_chit = DataLoader(chit, batch_size=len(chit), collate_fn=chit_collator,sampler=chit_sampler)
+    val_ac = DataLoader(ac, batch_size=batch_size, collate_fn=ac_collator,sampler=ac_sampler)
     return train_set, val_chit, val_ac
 
 
@@ -265,8 +276,8 @@ def initialize_classifier(input_dim, hidden_dim, num_classes, device):
     return classifier
 
 
-def initialize_metrics(train_labels, ac_matching_labels, chit_matching_labels):
-    train_metric = MultilabelAUPRC(num_labels=len(train_labels))
+def initialize_metrics(train_device, ac_matching_labels, chit_matching_labels):
+    train_metric = MeanSquaredError(device=train_device)
     ac_metric = MultilabelAUPRC(num_labels=len(ac_matching_labels))
     chit_metric = MultilabelAUPRC(num_labels=len(chit_matching_labels))
     return train_metric, ac_metric, chit_metric
@@ -285,11 +296,10 @@ def train_step(model, train_loader, loss_fn, optimizer, device, train_metric, lo
         loss = loss_fn(outputs, y)
         loss.backward()
         optimizer.step()
-
+        
         train_metric.update(outputs, y)
         running_loss += loss.item()
-        #TODO
-        break
+        #todo 
 
     avg_loss = running_loss / len(train_loader)
     train_metric_value = train_metric.compute() # TODO check, it was 0 
@@ -323,30 +333,50 @@ def validate_step(model, val_loader, loss_fn, device, label_idx, train_label_idx
     return avg_loss, metric_value
 
 
-def train_model(classifier, train_loader, val_loader_ac, val_loader_chit, loss_fn, optimizer, scheduler, train_metric, ac_metric, chit_metric, logger, label_idx_ac, train_label_idx_ac, label_idx_chit, train_label_idx_chit, device, epochs):
+def train_model(classifier, train_loader, val_loader_ac, val_loader_chit, loss_fn, optimizer, scheduler, train_metric, ac_metric,
+                 chit_metric, logger, label_idx_ac, train_label_idx_ac, label_idx_chit, train_label_idx_chit, device, epochs, checkpoint_path,  checkpoint_freq=5):
     for epoch in range(epochs):
         logging.info(f"Epoch {epoch+1}/{epochs}")
-        
+        train_loader.sampler.set_epoch(epoch)
         # Train
         train_loss, train_metric_value = train_step(classifier, train_loader, loss_fn, optimizer, device, train_metric, logger)
         logging.info(f"Train Loss: {train_loss:.4f}, Metric: {train_metric_value:.4f}")
 
-        
         # Validation on AC dataset
+        val_loader_ac.sampler.set_epoch(epoch)
         val_ac_loss, ac_metric_value = validate_step(classifier, val_loader_ac, loss_fn, device, label_idx_ac, train_label_idx_ac, ac_metric, logger, "AC")
         logging.info(f"Validation AC Loss: {val_ac_loss:.4f}, Metric: {ac_metric_value:.4f}")
         
-
         # Validation on CHIT dataset
+        val_loader_chit.sampler.set_epoch(epoch)
         val_chit_loss, chit_metric_value = validate_step(classifier, val_loader_chit, loss_fn, device, label_idx_chit, train_label_idx_chit, chit_metric, logger, "CHIT")
         logging.info(f"Validation CHIT Loss: {val_chit_loss:.4f}, Metric: {chit_metric_value:.4f}")
         
         # Step the learning rate scheduler
         scheduler.step()
 
+        if epoch != 0 and epoch % checkpoint_freq == 0:
+            
+            if device == 0: # device == rank
+                # All processes should see same parameters as they all start from same
+                # random parameters and gradients are synchronized in backward passes.
+                # Therefore, saving it in one process is sufficient. NOTE taken from torch tutorial
+                checkpoint = os.path.join(checkpoint_path,"text_classifier.checkpoint")
+                torch.save(classifier.state_dict(),checkpoint)
+                logger.log_model_checkpoint(checkpoint)
+            # Use a barrier() to make sure that process 1 loads the model after process
+            # 0 saves it.
+            dist.barrier()
+            # configure map_location properly
+            map_location = {'cuda:%d' % 0: 'cuda:%d' % device} # device == rank
+            classifier.load_state_dict(
+                torch.load(checkpoint_path, map_location=map_location, weights_only=True))
 
 
-def main():
+
+def main(rank,world_size):
+
+    setup(rank,world_size)
 
     logging.basicConfig(level=logging.INFO)
 
@@ -370,6 +400,7 @@ def main():
     lr = config["lr"] # 0.0001
     batch_size = config["batch_size"]
     model_params = config["model_params"]
+    CHECKPOINT_PATH = config["CHECKPOINT_PATH"]
 
     run = neptune.init_run(
         project="Soundbendor/timbre-tags",
@@ -378,10 +409,10 @@ def main():
         mode="debug" #"async"
     ) 
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = rank
     logging.info("Running on: %s", device)
 
-    #setup(rank,world_size)
+    
 
     logging.info("Loading Data...")
     labels = get_labels(args.label_set)
@@ -416,10 +447,11 @@ def main():
 
     captions, chit, ac = prepare_datasets(cap_df, chit_df, ac_df)
     string_collator, ac_collator, chit_collator = create_collators(st, clap, label_embeddings, SIGMA_VALUES["AC"], SIGMA_VALUES["CHIT"], rng)
-    train_set, val_chit, val_ac = create_dataloaders(captions, chit, ac, string_collator, chit_collator, ac_collator, batch_size)
+    t_sampler,chit_sampler,ac_sampler = create_samplers(captions,chit,ac,world_size,rank)
+    train_set, val_chit, val_ac = create_dataloaders(captions, chit, ac, string_collator, chit_collator, ac_collator,t_sampler,chit_sampler,ac_sampler, batch_size)
     classifier = initialize_classifier(model_params["input_dim"], model_params["hidden_dim"], len(labels.Words), device)
-    #classifier = DDP(classifier,device_ids=[rank])
-    train_metric, ac_metric, chit_metric = initialize_metrics(labels.Words, ac_matching_labels, chit_matching_labels)
+    classifier = DDP(classifier,device_ids=[device])
+    train_metric, ac_metric, chit_metric = initialize_metrics(device, ac_matching_labels, chit_matching_labels)
     ####
     loss_fn = nn.CrossEntropyLoss()
     optim = Adam(classifier.parameters(), lr=lr)
@@ -456,13 +488,21 @@ def main():
         label_idx_chit = chit_label_idx,
         train_label_idx_chit = chit_train_label_idx,
         device = device,
-        epochs = EPOCHS
+        epochs = EPOCHS,
+        checkpoint_path=CHECKPOINT_PATH
     )
 
-    # TODO add neptune end run thing here
-    # logger.end_run--ish
+    # DDP cleanup
+    cleanup()
+    
 if __name__ == "__main__": 
-    main()
+    n_gpus = torch.cuda.device_count()
+    assert n_gpus >= 2, f"Requires at least 2 GPUs to run, but got {n_gpus}"
+    world_size = n_gpus
+    mp.spawn(main, 
+            args=(world_size,),
+            nprocs=world_size,
+            join=True)
     
     #torch.save(classifier,"tt_text_classifier.pt")
     #run["model_checkpoints/tt_text_classifier"].upload("model_checkpoints/tt_text_classifier.pt")
