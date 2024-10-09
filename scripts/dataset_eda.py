@@ -6,6 +6,7 @@ import nltk
 from collections import Counter
 import seaborn as sns
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
 nltk.download('punkt')
 nltk.download('punkt_tab')
@@ -91,6 +92,75 @@ def count_adjectives(sentence):
     return adjective_count
 
 
+def get_adjective_counts_from_text(text):
+    # Tokenize the text into sentences
+    sentences = nltk.sent_tokenize(text)
+    # Create a dictionary to store adjectives and their counts
+    adjective_counts = defaultdict(int)
+    
+    # Process each sentence
+    for sentence in sentences:
+        # Tokenize the sentence into words
+        words = nltk.word_tokenize(sentence)
+        # Perform part-of-speech tagging
+        tagged = nltk.tag.pos_tag(words)
+        
+        # Count adjectives (tagged as 'JJ' for adjectives)
+        for word, tag in tagged:
+            if tag.startswith('JJ'):  # Check if the word is an adjective
+                adjective_counts[word.lower()] += 1  # Convert word to lowercase and update count
+    
+    return dict(adjective_counts)
+
+
+def count_sentences_with_words(sentences, word_set):
+    # Convert word_set to lowercase for case-insensitive matching
+    word_set = {word.lower() for word in word_set}
+    
+    # Initialize counter for sentences that contain at least one word from the set
+    count = 0
+    
+    # Iterate through each sentence
+    for sentence in sentences:
+        # Tokenize the sentence into words
+        words = nltk.word_tokenize(sentence)
+        # Convert words to lowercase for case-insensitive matching
+        words_lower = {word.lower() for word in words}
+        
+        # Check if any word in the sentence is in the word_set
+        if word_set & words_lower:  # Using set intersection to check for common words
+            count += 1
+    
+    return count
+
+
+import nltk
+from nltk.util import bigrams
+
+def count_sentences_with_bigrams(sentences, bigram_set):
+    # Ensure bigram_set consists of tuples of words, not characters
+    bigram_set = {tuple(bigram.lower().split()) for bigram in bigram_set}
+    
+    # Initialize counter for sentences that contain at least one bigram from the set
+    count = 0
+    
+    # Iterate through each sentence
+    for sentence in sentences:
+        # Tokenize the sentence into words
+        words = nltk.word_tokenize(sentence)
+        # Convert words to lowercase for case-insensitive matching
+        words_lower = [word.lower() for word in words]
+        
+        # Generate bigrams from the tokenized words
+        sentence_bigrams = set(bigrams(words_lower))
+        
+        # Check if any bigram in the sentence is in the bigram_set
+        if bigram_set & sentence_bigrams:  # Using set intersection to check for common bigrams
+            count += 1
+            print(sentence)
+    
+    return count
+
 if __name__ == "__main__":
     
     LABEL_PATH =  "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/tags/carron_lavengood.csv"
@@ -99,16 +169,22 @@ if __name__ == "__main__":
     WAVCAPS_PATH = "/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/json_files/"
     wv = combine_json_into_dataframe(WAVCAPS_PATH)
 
-    #bigrams = data["Carron"].dropna()[data["Carron"].dropna().apply(contains_two_words)]
-    #unigrams = data["Carron"].dropna()[~data["Carron"].dropna().apply(contains_two_words)]
-    #c_uni = count_tags(unigrams,"".join(wv.caption.tolist())) # does not account for two-word phrases: slow attack, fast attack
-    #c_bi = count_bigrams(bigrams,"".join(wv.caption.tolist()))
-    #print(c_uni, c_bi)
-    #total_tag_count = sum(c_uni.values())
+    my_bigrams = data["Merged"].dropna()[data["Merged"].dropna().apply(contains_two_words)]
+    #unigrams = data["Merged"].dropna()[~data["Merged"].dropna().apply(contains_two_words)]
+    #uni = count_tags(unigrams,"".join(wv.caption.tolist())) # does not account for two-word phrases: slow attack, fast attack
+    #bi = count_bigrams(bigrams,"".join(wv.caption.tolist()))
+    #print(uni, bi)
+    #total_tag_count = sum(uni.values())
     #print(total_tag_count)
     #pos_count, total = count_parts_of_speech("".join(wv.caption.tolist()))
     #print(pos_count, total)
     #wv["adj_count"] = wv["caption"].apply(count_adjectives)
     #print(wv.adj_count.describe())
     #print(wv.adj_count.value_counts())
-    print(sorted([len(c) for c in wv.caption.tolist()],reverse=True)[:15])
+    #print(sorted([len(c) for c in wv.caption.tolist()],reverse=True)[:15])
+    #adj_counts = pd.Series(get_adjective_counts_from_text("".join(wv.caption.tolist())))
+    #pd.to_pickle(adj_counts, "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/tags/wv_adj_counts.pickle")
+    #print(count_sentences_with_words(wv.caption,unigrams))
+    
+    # print( {tuple(map(str.lower, bigram)) for bigram in my_bigrams})
+    print(count_sentences_with_bigrams(wv.caption,my_bigrams))

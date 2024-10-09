@@ -25,11 +25,12 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
-
+from train_text_classifier import EmbeddingClassifier
 # TODO consider training data: CLAP is trained on WavCaps, does this matter to me?
-# TODO add data parallelism model checkpoints
-# TODO make sure logger works with neptune
-# TODO determine label thresh
+# TODO validation split of wavcaps
+# TODO remove chinese/ac as testing
+# TODO set up wavcaps huggingface
+# TODO set
 # TODO add type hints ot everything
 # TODO add new tests
 # TODO add docstrings 
@@ -43,26 +44,7 @@ rng = default_rng(seed_value)
 CACHE_DIR = "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/.cache"
 os.environ['HF_HOME'] = CACHE_DIR
 
-SIGMA_VALUES = {
-    "CHIT": 0.0544, # 0.054389693
-    "AC": 0.1196,   # 0.11958986
-}
 
-
-
-class EmbeddingClassifier(nn.Module):
-  def __init__(self,input_dim,hidden_dim,out_classes):
-    super().__init__()
-    self.hidden_dim = hidden_dim
-    self.input_dim = input_dim
-    self.num_classes = out_classes
-    self.map = nn.Sequential(
-        nn.Linear(self.input_dim,self.hidden_dim),
-        nn.ReLU(),
-        nn.LayerNorm(self.hidden_dim),
-        nn.Linear(self.hidden_dim,self.num_classes),
-
-    )
 
   def forward(self,x):
     return self.map(x)
@@ -247,6 +229,7 @@ def load_dataframe(path: str) -> pd.DataFrame:
         raise
 
 
+
 def load_models(clap_version='2023',use_cuda=True):
     st = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
     clap = CLAP(version=clap_version, use_cuda=use_cuda)
@@ -294,7 +277,7 @@ def train_step(model, train_loader, loss_fn, optimizer, device, train_metric, lo
         optimizer.zero_grad()
         
         outputs = model(X)
-        loss = loss_fn(outputs, y)
+        loss = sum([k(outputs,y)*v for k,v in loss_fn.items()])
         loss.backward()
         optimizer.step()
         
@@ -321,7 +304,7 @@ def validate_step(model, val_loader, loss_fn, device, label_idx, train_label_idx
             y = y.index_select(1, label_idx)
 
             outputs = model(X).index_select(1, train_label_idx)
-            loss = loss_fn(outputs, y)
+            loss = sum([k(outputs,y)*v for k,v in loss_fn.items()])
             metric.update(outputs, y)
             running_loss += loss.item()
 
@@ -459,7 +442,12 @@ def main(rank,world_size):
     classifier = DDP(classifier,device_ids=[device])
     train_metric, ac_metric, chit_metric = initialize_metrics(device, ac_matching_labels, chit_matching_labels)
     ####
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn_1 = nn.CrossEntropyLoss()
+    loss_weight_1 = 1 # TODO config
+    loss_fn_2 = nn.L1Loss() # cosineEmbedding, CosineSim, MSE, etc.
+    loss_weight_2 = 0.5 # TODO config
+    loss_fn_params = {loss_fn_1:loss_weight_1,
+                      loss_fn_2: loss_weight_2}
     optim = Adam(classifier.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, 0.9)
 
@@ -483,7 +471,7 @@ def main(rank,world_size):
         train_loader = train_set,
         val_loader_ac = val_ac,
         val_loader_chit = val_chit,
-        loss_fn = loss_fn,
+        loss_fn = loss_fn_params ,
         optimizer = optim,
         scheduler = scheduler,
         train_metric = train_metric,

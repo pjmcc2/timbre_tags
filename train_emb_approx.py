@@ -19,7 +19,6 @@ from tqdm import tqdm
 import random
 import argparse
 
-# TODO add audiostock to server
 # TODO decide train set
 # TODO set up config file?
 

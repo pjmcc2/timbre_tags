@@ -2,7 +2,7 @@
     "CAP_DATA_PATH":"/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/json_files/",
     "CHIT_PATH": "/nfs/stak/users/mccabepe/research_folder/timbre_tags/data/chit/chit_dataset_torch.pickle",
     "AC_PATH": "/nfs/stak/users/mccabepe/research_folder/timbre_tags/data/audiocommons/ac_dataset.pickle",
-    "CHECKPOINT_PATH": "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/model_checkpoints",
+    "CHECKPOINT_PATH": "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/model_checkpoints/text_classifier",
     "epochs": 1,
     "lr" : 0.001,
     "class_thresh": 0.02175,
