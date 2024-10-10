@@ -405,11 +405,12 @@ def main(rank,world_size):
     batch_size = config["batch_size"]
     model_params = config["model_params"]
     CHECKPOINT_PATH = config["CHECKPOINT_PATH"]
+    NEPTUNE_KEY = config["NEPTUNE_KEY"]
 
     if rank ==0:
         run = neptune.init_run(
             project="Soundbendor/timbre-tags",
-            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJhM2FhZjQ3Yy02NmMxLTRjNzMtYjMzZC05YjM2N2FjOTgyMTEifQ==",
+            api_token=NEPTUNE_KEY,
             name="config_test_run",
             mode="async" #"async"
         ) 

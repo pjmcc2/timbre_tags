@@ -301,12 +301,12 @@ def main():
     SWAP_RATE = config["swap_rate"]
     labels = sorted(config["TAG_SET"])
     prompts = [gen_prompt(w) for w in labels]
-
+    NEPTUNE_KEY = config["NEPTUNE_KEY"]
 
 
     run = neptune.init_run(
         project="Soundbendor/timbre-tags",
-        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJhM2FhZjQ3Yy02NmMxLTRjNzMtYjMzZC05YjM2N2FjOTgyMTEifQ==",
+        api_token=NEPTUNE_KEY,
         name="no_audio_classifier",
         mode="async" # "async" / "debug"
     ) 

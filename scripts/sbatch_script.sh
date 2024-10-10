@@ -17,4 +17,5 @@ python train_no_audio.py
 #SBATCH --partition=soundbendor
 #SBATCH --account=soundbendor
 
+#SBATCH --time limit simethign
 #SBATCH --partition=dgx2

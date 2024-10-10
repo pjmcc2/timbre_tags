@@ -3,6 +3,7 @@
     "CHIT_PATH": "/nfs/stak/users/mccabepe/research_folder/timbre_tags/data/chit/chit_dataset_torch.pickle",
     "AC_PATH": "/nfs/stak/users/mccabepe/research_folder/timbre_tags/data/audiocommons/ac_dataset.pickle",
     "CHECKPOINT_PATH": "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/model_checkpoints/text_classifier",
+    "NEPTUNE_KEY" : "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJhM2FhZjQ3Yy02NmMxLTRjNzMtYjMzZC05YjM2N2FjOTgyMTEifQ==",
     "epochs": 1,
     "lr" : 0.001,
     "class_thresh": 0.02175,
