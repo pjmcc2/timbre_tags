@@ -9,3 +9,5 @@ scripts/gen.out
 .pytest_cache
 text.text
 scratch.py
+config.json
+all_text_config.json
