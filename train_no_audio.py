@@ -42,7 +42,7 @@ CACHE_DIR = "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/.cache"
 os.environ['HF_HOME'] = CACHE_DIR
 
 
-class EmbeddingClassifierLogOutput(nn.Module):
+class EmbeddingClassifier(nn.Module):
   def __init__(self,input_dim,hidden_dim,out_classes,p=0.5):
     super().__init__()
     self.hidden_dim = hidden_dim
@@ -52,9 +52,9 @@ class EmbeddingClassifierLogOutput(nn.Module):
         nn.Linear(self.input_dim,self.hidden_dim),
         nn.SiLU(),
         nn.LayerNorm(self.hidden_dim),
-        nn.Linear(self.hidden_dim,self.num_classes),
         nn.Dropout(p=p),
-        nn.LogSoftmax()
+        nn.Linear(self.hidden_dim,self.num_classes),
+        nn.Sigmoid()
     )
 
   def forward(self,x):
@@ -92,7 +92,7 @@ class Logger:
         self.run[self.base_namespace]["model/architecture"] = model.__str__()
 
     def log_model_checkpoint(self,checkpoint):
-        self.run[f"model_checkpoints/state_dicts"].upload(f"model_checkpoints/{checkpoint}")
+        self.run[f"model_checkpoints/state_dicts"].upload(checkpoint)
 
     def end_run(self):
         self.run.stop()
@@ -193,7 +193,7 @@ def initialize_metrics(train_device,):
 
 
 
-def train_step(model, train_loader, loss_fn, optimizer, device, train_metric, logger):
+def train_step(model, train_loader, loss_fn, optimizer, device, train_metric, logger,split_name="train"):
     model.train()
     running_loss = 0.0
     
@@ -215,8 +215,8 @@ def train_step(model, train_loader, loss_fn, optimizer, device, train_metric, lo
     avg_loss = running_loss / len(train_loader)
     train_metric_value = train_metric.compute() 
     if logger:
-        logger.log_epoch_metric("train", train_metric_value)
-        logger.log_epoch_loss("train",avg_loss)
+        logger.log_epoch_metric(split_name, train_metric_value)
+        logger.log_epoch_loss(split_name,avg_loss)
     train_metric.reset()
     return avg_loss, train_metric_value
 
@@ -249,7 +249,7 @@ def validate_step(model, val_loader, loss_fn, device, metric, logger,split_name=
 
 
 def train_model(classifier, train_loader, val_loader, loss_fn, optimizer, scheduler, train_metric, val_metric,
-                  device, epochs, checkpoint_path,  checkpoint_freq=5, logger=None):
+                  device, epochs, checkpoint_path, checkpoint_name,  checkpoint_freq=5, logger=None):
     for epoch in range(epochs):
         #logging.info(f"Epoch {epoch+1}/{epochs}")
         
@@ -262,14 +262,14 @@ def train_model(classifier, train_loader, val_loader, loss_fn, optimizer, schedu
         
         # Validation
         
-        val_loss, val_metric_value = validate_step(classifier, val_loader, loss_fn, device, val_metric, logger)
+        #val_loss, val_metric_value = validate_step(classifier, val_loader, loss_fn, device, val_metric, logger)
         #logging.info(f"Validation CHIT Loss: {val_loss:.4f}, Metric: {val_metric_value:.4f}")
         
         # Step the learning rate scheduler
         scheduler.step()
 
         if epoch != 0 and epoch % checkpoint_freq == 0:
-            checkpoint = os.path.join(checkpoint_path,"no_audio_classifier.checkpoint")
+            checkpoint = os.path.join(checkpoint_path,f"no_audio_classifier_{checkpoint_name}.checkpoint")
             torch.save(classifier.state_dict(),checkpoint)
             logger.log_model_checkpoint(checkpoint)
 
@@ -327,22 +327,25 @@ def main():
     clap_label_embeddings = clap.get_text_embeddings(prompts)
 
     captions = datasets.StringDatasetFromDataFrame(cap_df)
-    train_size = int(0.8 * len(captions))  # 80% for training
-    val_size = len(captions) - train_size  # 20% for validation
-    train_cap,val_cap = random_split(captions,[train_size,val_size])
+    #train_size = int(0.8 * len(captions))  # 80% for training
+    #val_size = len(captions) - train_size  # 20% for validation
+    #train_cap,val_cap = random_split(captions,[train_size,val_size])
 
-    string_collator = datasets.AugmentationCollator(st,clap,st_label_embeddings,clap_label_embeddings,norm=NORM,sigma=SIGMA,swap_rate=0.5,rng=rng,device=device) 
-    val_collator = datasets.DescriptionCollator(st,clap,st_label_embeddings,norm=NORM,device=device)
+     
+    string_collator = datasets.AugmentationCollator(st,clap,st_label_embeddings,clap_label_embeddings,norm=NORM,sigma=SIGMA,swap_rate=SWAP_RATE,rng=rng,device=device) 
+    #val_collator = datasets.DescriptionCollator(st,clap,st_label_embeddings,norm=NORM,device=device)
 
+    train_data = DataLoader(captions, batch_size=batch_size, collate_fn=string_collator)
+    #train_data = DataLoader(train_cap, batch_size=batch_size, collate_fn=string_collator)
+    val_data = None
+    #val_data = DataLoader(val_cap, batch_size=batch_size, collate_fn=string_collator)
 
-    train_data = DataLoader(train_cap, batch_size=batch_size, collate_fn=string_collator)
-    val_data = DataLoader(val_cap, batch_size=batch_size, collate_fn=string_collator)
-
-    classifier = EmbeddingClassifierLogOutput(model_params["input_dim"], model_params["hidden_dim"], len(labels)).to(device)
+    classifier = EmbeddingClassifier(model_params["input_dim"], model_params["hidden_dim"], len(labels)).to(device)
 
     train_metric = MeanSquaredError(device=device)
-    val_metric = MeanSquaredError(device=device)
-    loss_fn = nn.KLDivLoss()
+    #val_metric = MeanSquaredError(device=device)
+    val_metric=None
+    loss_fn = nn.BCELoss()
     optim = Adam(classifier.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, 0.9)
 
@@ -358,7 +361,8 @@ def main():
         "epochs": EPOCHS,
         "sigma": SIGMA,
         "swap_rate" : SWAP_RATE,
-        "normalize": NORM
+        "normalize": NORM,
+        "loss_fn": "BCELoss"
     }
     if logger:
         logger.log_hyperparameters(parameters)
@@ -375,7 +379,8 @@ def main():
         logger = logger,
         device = device,
         epochs = EPOCHS,
-        checkpoint_path=CHECKPOINT_PATH
+        checkpoint_path=CHECKPOINT_PATH,
+        checkpoint_name=config["TAG_ID"]
     )
 
 
