@@ -5,6 +5,7 @@
 #SBATCH --job-name=tt_no_audio
 #SBATCH --gres=gpu:1
 #SBATCH --mem-per-gpu=6G
+#SBATCH --time=23:59:59
 #SBATCH -o scripts/gen.out
 #SBATCH -e scripts/gen.err
 
