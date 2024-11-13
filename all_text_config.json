@@ -1,10 +1,10 @@
 {
     "CAP_DATA_PATH":"/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/json_files/",
-    "TAG_SET": ["booming","bright","deep","hard","reverberating","rough","sharp","warm"],
-    "TAG_ID": "ac",
+    "TAG_SET": ["slim","bright","dim","sharp","thick","thin","solid","clear","dry","plump","rough","pure","hoarse","harmonious","soft","turbid","booming","deep","hard","reverberating","rough","warm"],
+    "TAG_ID": "chit_AND_ac",
     "CHECKPOINT_PATH": "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/model_checkpoints/no_audio_classifier",
     "NEPTUNE_KEY" : "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJhM2FhZjQ3Yy02NmMxLTRjNzMtYjMzZC05YjM2N2FjOTgyMTEifQ==",
-    "EPOCHS": 30,
+    "EPOCHS": 31,
     "SIGMA": 0.65357995,
     "lr" : 0.001,
     "batch_size" : 256,
@@ -12,6 +12,6 @@
         "input_dim": 1024,
         "hidden_dim": 1024
     },
-    "normalize": true,
+    "normalize": "softmax",
     "swap_rate" : 0.01   
 }

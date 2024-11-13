@@ -26,7 +26,7 @@ def train_model_kfold(classifier, train_loader, val_loader, loss_fn, optimizer, 
         # Validation
         
         val_loss, val_metric_value = validate_step(classifier, val_loader, loss_fn, device, val_metric, logger,split_name=f"val_fold_{fold}")
-        logging.info(f"Validation CHIT Loss: {val_loss:.4f}, Metric: {val_metric_value:.4f}")
+        logging.info(f"Validation Loss: {val_loss:.4f}, Metric: {val_metric_value:.4f}")
         
         # Step the learning rate scheduler
         scheduler.step()
@@ -36,7 +36,8 @@ def train_model_kfold(classifier, train_loader, val_loader, loss_fn, optimizer, 
             torch.save(classifier.state_dict(),checkpoint)
             if logger:
                 logger.log_model_checkpoint(checkpoint)
-
+        
+    return train_loss,train_metric_value, val_loss, val_metric_value
 
 # I want to load my pre-trained model, then train my tag classifier from the startign state
 def main():
@@ -64,7 +65,7 @@ def main():
         project="Soundbendor/timbre-tags",
         api_token=NEPTUNE_KEY,
         name=f"audio_classifier_{TAG_ID}",
-        mode="debug" # "async" / "debug"
+        mode="async" # "async" / "debug"
     ) 
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -105,7 +106,7 @@ def main():
 
     run["parameters"] = parameters
 
-    for fold, (train_ids, test_ids) in tqdm(enumerate(kfold.split(data))):
+    for fold, (train_ids, test_ids) in enumerate(kfold.split(data)):
 
         
         train_subsampler = torch.utils.data.SubsetRandomSampler(train_ids)
@@ -127,8 +128,9 @@ def main():
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.9)
         
 
-        
-        train_model_kfold(
+        results = {}
+        logging.info(f"Training fold: {fold}")
+        tl, tm ,vl , vm = train_model_kfold(
             classifier = classifier,
             train_loader = trainloader,
             val_loader  =valloader,
@@ -145,7 +147,13 @@ def main():
             checkpoint_name=TAG_ID
         )
 
+        results[fold] = {"final_training_loss" : tl,
+                         "final_training_metric_value" : tm,
+                         "final_val_loss": vl,
+                         "final_val_metric_value": vm}
    
+        logger.log_misc(f"final_results/fold: {fold}",results[fold])
+
 
 
     

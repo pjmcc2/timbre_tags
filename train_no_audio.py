@@ -22,14 +22,10 @@ import random
 import logging
 import torch.distributed as dist
 import torch.multiprocessing as mp
-
-
-
-
-# TODO consider training data: CLAP is trained on WavCaps, does this matter to me? No?
-# TODO get wavcaps sigma. The scenario is that we assume many samples are infeasible, but a few are possible. This gets me a loose estimate.
-# TODO train model with augmentations: gaussian noise sampled with stddev sigma with prob. alpha. Additionally, randomly swap label from CLAP vs ST with probability beta.
-# #### TODO Possibly also use something like instance replacement. Since I might have to store the audio of wavcaps as audio embeddings from CLAP anyway, might as well.
+import pickle
+from functools import partial
+from torch.nn.functional import softmax
+from datetime import datetime
 
 
 seed_value = 1066
@@ -75,13 +71,13 @@ class Logger:
             self.log_model_info(classifier)
     
     def log_batch_loss(self, batch_idx, loss):
-        self.run[self.base_namespace]["batch/train_loss"].append(loss)
+        self.run[self.base_namespace]["train_loss"].append(loss)
     
     def log_epoch_loss(self, split_name, loss):
-        self.run[self.base_namespace][f"batch/{split_name}_epoch_loss"].append(loss)
+        self.run[self.base_namespace][f"{split_name}_epoch_loss"].append(loss)
     
     def log_epoch_metric(self, split_name, metric_value):
-        self.run[self.base_namespace][f"batch/{split_name}_metric"].append(metric_value)
+        self.run[self.base_namespace][f"/{split_name}_metric"].append(metric_value)
 
     def log_hyperparameters(self, parameters):
         """Logs hyperparameters to Neptune run."""
@@ -94,10 +90,14 @@ class Logger:
     def log_model_checkpoint(self,checkpoint):
         self.run[f"model_checkpoints/state_dicts"].upload(checkpoint)
 
+    def log_misc(self,name,to_upload):
+        self.run[name].append(to_upload)
+
     def end_run(self):
         self.run.stop()
   
-
+def affine_normalize(A):
+    return (A + 1)/2
 
 def get_labels(label_set_name):
 
@@ -200,8 +200,9 @@ def train_step(model, train_loader, loss_fn, optimizer, device, train_metric, lo
     for  X, y in tqdm(train_loader):
         X = X.to(device)
         y = y.to(device)
+
         optimizer.zero_grad()
-        
+
         outputs = model(X)
  
         loss = loss_fn(outputs, y)
@@ -210,7 +211,7 @@ def train_step(model, train_loader, loss_fn, optimizer, device, train_metric, lo
         
         train_metric.update(outputs, y)
         running_loss += loss.item()
-       
+
 
     avg_loss = running_loss / len(train_loader)
     train_metric_value = train_metric.compute() 
@@ -258,12 +259,12 @@ def train_model(classifier, train_loader, val_loader, loss_fn, optimizer, schedu
         train_loss, train_metric_value = train_step(classifier, train_loader, loss_fn, optimizer, device, train_metric, logger)
         #logging.info(f"Train Loss: {train_loss:.4f}, Metric: {train_metric_value:.4f}")
 
-     
+        
         
         # Validation
         
         #val_loss, val_metric_value = validate_step(classifier, val_loader, loss_fn, device, val_metric, logger)
-        #logging.info(f"Validation CHIT Loss: {val_loss:.4f}, Metric: {val_metric_value:.4f}")
+        #logging.info(f"Validation Loss: {val_loss:.4f}, Metric: {val_metric_value:.4f}")
         
         # Step the learning rate scheduler
         scheduler.step()
@@ -278,8 +279,6 @@ def train_model(classifier, train_loader, val_loader, loss_fn, optimizer, schedu
 
 
 def main():
-
-
 
     #logging.basicConfig(level=logging.INFO)
 
@@ -299,15 +298,25 @@ def main():
     SIGMA = config["SIGMA"]
     NORM = config["normalize"]
     SWAP_RATE = config["swap_rate"]
-    labels = sorted(config["TAG_SET"])
+    labels = sorted(list(set(config["TAG_SET"])))
     prompts = [gen_prompt(w) for w in labels]
     NEPTUNE_KEY = config["NEPTUNE_KEY"]
+    tag_id = config["TAG_ID"]
 
+    if NORM == "softmax":
+        norm = partial(softmax,dim=1)
+    elif NORM == "affine":
+        norm = affine_normalize
+    elif NORM == "sigmoid":
+        norm = torch.nn.functional.sigmoid
+
+
+    current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     run = neptune.init_run(
         project="Soundbendor/timbre-tags",
         api_token=NEPTUNE_KEY,
-        name="no_audio_classifier",
+        name=f"no_audio_classifier_{tag_id}_{current_datetime}",
         mode="async" # "async" / "debug"
     ) 
  
@@ -320,6 +329,14 @@ def main():
     #logging.info("Loading Data...")
 
     cap_df = combine_json_into_dataframe(CAP_DATA_PATH)
+    if config["TAG_ID"] == "ac":
+        with open("data/audiocommons/wavcaps_freesound_ids.pickle",'rb') as f:
+            df_filter = pickle.load(f)
+            df_filter = [str(i) for i in df_filter]
+            cap_df = cap_df[~cap_df['id'].isin(df_filter)]
+
+
+    
 
     #logging.info("Loading pretrained models...")
     st, clap = load_models(device)
@@ -332,7 +349,7 @@ def main():
     #train_cap,val_cap = random_split(captions,[train_size,val_size])
 
      
-    string_collator = datasets.AugmentationCollator(st,clap,st_label_embeddings,clap_label_embeddings,norm=NORM,sigma=SIGMA,swap_rate=SWAP_RATE,rng=rng,device=device) 
+    string_collator = datasets.AugmentationCollator(st,clap,st_label_embeddings,clap_label_embeddings,norm=norm,sigma=SIGMA,swap_rate=SWAP_RATE,rng=rng,device=device) 
     #val_collator = datasets.DescriptionCollator(st,clap,st_label_embeddings,norm=NORM,device=device)
 
     train_data = DataLoader(captions, batch_size=batch_size, collate_fn=string_collator)
@@ -380,7 +397,7 @@ def main():
         device = device,
         epochs = EPOCHS,
         checkpoint_path=CHECKPOINT_PATH,
-        checkpoint_name=config["TAG_ID"]
+        checkpoint_name=f"{tag_id}_{NORM}"
     )
 
 

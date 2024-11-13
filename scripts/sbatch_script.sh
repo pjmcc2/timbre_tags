@@ -2,7 +2,7 @@
 #
 #SBATCH --partition=soundbendor
 #SBATCH --account=soundbendor
-#SBATCH --job-name=tt_no_audio
+#SBATCH --job-name=no_audio_sig
 #SBATCH --gres=gpu:1
 #SBATCH --mem-per-gpu=6G
 #SBATCH --time=23:59:59

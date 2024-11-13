@@ -4,7 +4,7 @@ import torch
 import pandas as pd
 from numpy.random import default_rng
 from torch.nn.functional import softmax
-
+import numpy as np
 
 def cosine_sim(A,B):
     """
@@ -35,7 +35,7 @@ class StringDatasetFromDataFrame(Dataset):
         return desc
 
 class DescriptionCollator(): 
-    def __init__(self, label_encoder, text_encoder, label_embeddings, norm=True, device=None):
+    def __init__(self, label_encoder, text_encoder, label_embeddings, norm=True, device=None): # TODO fix norm
         self.label_encoder = label_encoder
         self.tencoder = text_encoder
         self.label_embeddings = label_embeddings.to(device)
@@ -48,15 +48,16 @@ class DescriptionCollator():
         with torch.no_grad():
             comparison_embeddings = self.label_encoder.encode(batch)
             train_embeddings = self.tencoder.get_text_embeddings(batch)
- 
-        labels = cosine_sim(self.label_embeddings,comparison_embeddings)
+    
+        
+        labels = cosine_sim(self.label_embeddings,comparison_embeddings) # TODO swap around
         if self.norm:
             labels = softmax(labels,dim=1)
         return train_embeddings, labels
     
 
 class AugmentationCollator:
-    def __init__(self, label_encoder, text_encoder, label_encoder_label_embeddings, text_encoder_label_embeddings,norm=True, sigma=None, swap_rate=0, rng=None, seed=None, device=None):
+    def __init__(self, label_encoder, text_encoder, label_encoder_label_embeddings, text_encoder_label_embeddings,norm=None, sigma=None, swap_rate=0, rng=None, seed=None, device=None):
         self.label_encoder = label_encoder
         self.tencoder = text_encoder
         self.st_label_embeddings = label_encoder_label_embeddings.to(device) 
@@ -85,7 +86,8 @@ class AugmentationCollator:
         
         #norm
         if self.norm:
-            labels = softmax(labels,dim=1)
+            #labels = softmax(labels,dim=1)
+            labels = self.norm(labels)
         
         if self.sigma:
             noise = torch.randn(train_embeddings.shape, device=self.device) * self.sigma
@@ -137,7 +139,7 @@ class AudioEmbeddingsDataset(Dataset):
 
     def __getitem__(self, idx):
         audio = self.df.embeddings.iloc[idx]
-        classes = self.df.drop(["embeddings","path"],axis=1).iloc[idx]                                                    
+        classes = self.df.drop(["embeddings","path"],axis=1).iloc[idx].to_numpy()                                                    
         if self.transform:  
             audio = self.transform(audio)
         return audio, classes

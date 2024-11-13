@@ -26,7 +26,7 @@ def train_model_kfold(classifier, train_loader, val_loader, loss_fn, optimizer, 
         # Validation
         
         val_loss, val_metric_value = validate_step(classifier, val_loader, loss_fn, device, val_metric, logger,split_name=f"val_fold_{fold}")
-        logging.info(f"Validation CHIT Loss: {val_loss:.4f}, Metric: {val_metric_value:.4f}")
+        logging.info(f"Validation Loss: {val_loss:.4f}, Metric: {val_metric_value:.4f}")
         
         # Step the learning rate scheduler
         scheduler.step()
@@ -37,6 +37,7 @@ def train_model_kfold(classifier, train_loader, val_loader, loss_fn, optimizer, 
             if logger:
                 logger.log_model_checkpoint(checkpoint)
 
+    return train_loss,train_metric_value, val_loss, val_metric_value
 
 # I want to load my pre-trained model, then train my tag classifier from the startign state
 def main():
@@ -63,8 +64,8 @@ def main():
     run = neptune.init_run(
         project="Soundbendor/timbre-tags",
         api_token=NEPTUNE_KEY,
-        name=f"audio_classifier_{TAG_ID}",
-        mode="debug" # "async" / "debug"
+        name=f"audio_baseline_{TAG_ID}",
+        mode="async" # "async" / "debug"
     ) 
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -105,6 +106,7 @@ def main():
 
     run["parameters"] = parameters
 
+    results = {}
     for fold, (train_ids, test_ids) in tqdm(enumerate(kfold.split(data))):
 
         
@@ -127,7 +129,7 @@ def main():
         
 
         
-        train_model_kfold(
+        tl, tm ,vl , vm = train_model_kfold(
             classifier = classifier,
             train_loader = trainloader,
             val_loader  =valloader,
@@ -143,9 +145,12 @@ def main():
             checkpoint_path=CHECKPOINT_PATH,
             checkpoint_name=f"{TAG_ID}_baseline"
         )
-
+        results[fold] = {"final_training_loss" : tl,
+                         "final_training_metric_value" : tm,
+                         "final_val_loss": vl,
+                         "final_val_metric_value": vm}
    
-
+        logger.log_misc(f"final_results/fold: {fold}",results[fold])
 
     
 if __name__ == "__main__": 
