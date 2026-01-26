@@ -1,0 +1,69 @@
+# timbre experiment config file.
+
+# THINGS TO CHECK:
+# Only run Ccombination datasets with fill_dataset on
+# Only run many_noise with SGD model
+# Double check add-noise and normalize parameters
+# Double check n_samples
+# 
+
+
+shared:
+  seed: 1066
+  binary: true
+  
+
+  output_dir: "results/timbre"
+  noise_params:
+    mean: 0
+    std: 0.023023764 # EMPIRICAL
+  model_params:
+    loss: "squared_error"
+    regularization_strength: 1
+    epochs: 200
+    
+  noise_iters: 200
+  n_samples: 15000
+  many_noise: false
+  full_dataset: false
+  add_noise: false
+  normalize: true
+  num_seeds: 10
+
+
+labels: 
+  - "booming"
+  - "bright"
+  - "deep"
+  - "hard"
+  - "reverb"
+  - "rough"
+  - "sharp"
+  - "warm"
+
+
+datasets:
+  - "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/llama/captions/synth_dataset_ONLY_AC_embs.pickle"
+  - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/wavcaps/wv_cap_precomputed_timbre_CLAP_ac.pickle"
+  - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/wavcaps/wv_cap_precomputed_timbre_SBERT_ac.pickle"
+  - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/noise/noise_ac.pickle"
+    # - "L+C"
+    # - "L+S"
+    # - "L+N"
+    #- "N+C"
+    # - "N+S"
+    #- "L+N+C"
+    #- "L+N+S"
+
+augmentation:
+  - "nothing"
+  - "mean_shift"
+  - "c2"
+
+models:
+  - "ridge"
+  #- "sgd"
+  # TODO: 2-layer MLP
+  # TODO: MEAN of pos class
+
+

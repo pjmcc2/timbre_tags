@@ -1,0 +1,40 @@
+# timbre experiment config file.
+
+shared:
+  seed: 1066
+  binary: true
+  many_noise: false
+  output_dir: "tests/data/test_results/timbre"
+  add_noise: true
+  noise_params:
+    mean: 0
+    std: 1 # TODO look up
+  normalize: false
+  model_params:
+    loss: "squared_error"
+    regularization_strength: 0.0001
+    epochs: 1000
+  noise_iters: 20
+  n_samples: 15000
+  full_dataset: false
+  num_seeds: 10
+
+datasets:
+  - "tests/data/test_precomputed.pickle"
+
+
+
+augmentation:
+  - "c2"
+
+labels: 
+    - "booming"
+
+models:
+  - "ridge"
+
+
+
+
+
+

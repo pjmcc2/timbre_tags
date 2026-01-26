@@ -1,0 +1,45 @@
+
+
+
+Get dataframe of all sampled* datasets and methods, NO noise, NORMALIZED, with c2 NOT NORMALIZED 
+
+Get dataframe of all sampled* datasets/methods NOISE, NORMALIZED  with c2(3) NOT NORMALIZED 
+
+average across seeds:
+
+-> average non-noise and noise results per dataset (and get std): FIRST TABLE
+
+-> same thing but per METHOD: SECOND TABLE
+
+->
+
+Get dataframe of all sampled* datasets/methods with MANY NOISE NORMALISED with c2(3) NOT NORMALISED in prog
+
+-> average over seeds (WITH STD as error bars)
+-> GRAPH 8 lines
+
+Get dataframe of all FULL datasets/methods NO noise NORMALISED with c2 NOT NORMALISED in prog
+
+Get dataframe of all FULL datasets/methods NOISE NORMALISED with c2(3) NOT NORMALISED in prog
+
+- ADD CODE for AUDIO baselines
+- ADD CODE for CLAP baselines
+
+
+All figures
+related works
+intro re-write
+results
+discussion
+conclusion
+
+second look through everything
+
+
+
+CUT?
+Get dataframe of all FULL* datasets with MANY NOISE NORMALISED with c2(3) NORMALISED
+NORMED VERSIONS OF C2
+
+
+
