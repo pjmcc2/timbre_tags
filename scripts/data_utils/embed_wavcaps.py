@@ -11,13 +11,21 @@ from sklearn.preprocessing import normalize
 import pickle
 import argparse
 from tqdm import tqdm
-
+import pandas as pd
 
 def load_json_data_from_directory(directory_path):
     records = []
-
+    _check_dupes = False
     for filename in os.listdir(directory_path):
+        if filename == "fsd_final.json":
+            _check_dupes = True
+            id_list = pd.read_csv("fsd_ids_to_use.txt").to_list()
+
+        else:
+            _check_dupes = False
+
         if filename.endswith(".json"):
+               
             file_path = os.path.join(directory_path, filename) 
             with open(file_path, "r") as f:
                 content = json.load(f)
@@ -26,10 +34,19 @@ def load_json_data_from_directory(directory_path):
                 # Now iterate over the list of dicts
                 for item in data_list:
                     if "id" in item and "caption" in item:
-                        records.append({
-                            "id": item["id"],
-                            "caption": item["caption"]
-                        })
+                        if _check_dupes:
+                            if item["id"] in id_list:
+                                continue
+                            else:
+                                records.append({
+                                    "id": item["id"],
+                                    "caption": item["caption"]
+                                })
+                        else:
+                             records.append({
+                                "id": item["id"],
+                                "caption": item["caption"]
+                            })
 
     return pd.DataFrame(records)
 
