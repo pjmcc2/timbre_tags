@@ -19,8 +19,8 @@ def load_json_data_from_directory(directory_path):
     for filename in os.listdir(directory_path):
         if filename == "fsd_final.json":
             _check_dupes = True
-            id_list = pd.read_csv("fsd_ids_to_use.txt").to_list()
-
+            ac_id_list = pd.read_csv("fsd_ids_to_use.txt").to_list()
+            clotho_id_list = pd.read_csv("/nfs/hpc/share/mccabepe/clotho/")
         else:
             _check_dupes = False
 
@@ -35,7 +35,7 @@ def load_json_data_from_directory(directory_path):
                 for item in data_list:
                     if "id" in item and "caption" in item:
                         if _check_dupes:
-                            if item["id"] in id_list: # SKIP if also in freesound stuff from wavcaps
+                            if item["id"] in ac_id_list: # SKIP if also in freesound stuff from wavcaps
                                 continue
                             else:
                                 records.append({

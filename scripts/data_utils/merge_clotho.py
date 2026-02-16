@@ -22,6 +22,7 @@ ID_MAP_OUT        = "clotho_ids.csv"
 ONE_COL_CAPTIONS  = "captions_one_column.csv"
 ONE_COL_FINAL_OUT = "captions_one_column_deduped_vs_extant.csv"
 DUPLICATE_IDS_OUT = "duplicates_vs_extant_ids.csv"
+FILTERED_FRAME_OUT = "clotho_filtered_full.csv"
 
 
 # ----------------- HELPERS -----------------
@@ -92,7 +93,7 @@ def make_id_map(merged: pd.DataFrame, out_path: Path) -> pd.DataFrame:
     missing = [c for c in cols_needed if c not in merged.columns]
     if missing:
         raise KeyError(f"ID map requires columns {cols_needed}. Missing: {missing}")
-    id_map = merged.loc[:, cols_needed].drop_duplicates().reset_index(drop=True) # IDK if I want this? didn't we already drop columns
+    id_map = merged.loc[:, cols_needed].drop_duplicates().reset_index(drop=True) 
     id_map.to_csv(out_path, index=False)
     return id_map
 
@@ -160,7 +161,7 @@ def filter_by_extant_sound_ids(
     # Output: one-column of captions (unique)
     filtered_one_col = filtered.loc[:, [caption_col]].drop_duplicates().reset_index(drop=True)
 
-    return overlap_ids.reset_index(drop=True), filtered_one_col
+    return overlap_ids.reset_index(drop=True), filtered, filtered_one_col
 
 
 # ----------------- ORCHESTRATION -----------------
@@ -184,7 +185,9 @@ def run_pipeline(
     6) Save pre-filter one-column captions -> captions_one_column.csv
     7) If extant sound_id CSV provided, remove those IDs and save:
          - duplicates_vs_extant_ids.csv  (overlap report)
+         - filtered dataframe
          - captions_one_column_deduped_vs_extant.csv (final one-column captions)
+         -
     """
     root = Path(root_dir)
 
@@ -213,16 +216,18 @@ def run_pipeline(
         "id_map": str(root / ID_MAP_OUT),
         "one_column_captions": str(root / ONE_COL_CAPTIONS),
         "duplicates_vs_extant_ids": None,
+        "filtered dataframe":None,
         "one_column_captions_minus_extant": None,
     }
 
     # 7: filter by external sound_id file, if provided
     if extant_sound_id_csv:
-        overlap_ids, filtered_one_col = filter_by_extant_sound_ids(long_with_ids, extant_sound_id_csv)
+        overlap_ids, filtered_full, filtered_one_col = filter_by_extant_sound_ids(long_with_ids, extant_sound_id_csv)
         overlap_ids.to_csv(root / DUPLICATE_IDS_OUT, index=False)
         filtered_one_col.to_csv(root / ONE_COL_FINAL_OUT, index=False)
 
         result["duplicates_vs_extant_ids"] = str(root / DUPLICATE_IDS_OUT)
+        result["filtered dataframe"] = str(root / FILTERED_FRAME_OUT)
         result["one_column_captions_minus_extant"] = str(root / ONE_COL_FINAL_OUT)
 
     return result
@@ -237,7 +242,7 @@ if __name__ == "__main__":
         merge_keys=["file_name"],
         caption_cols=["caption_1", "caption_2", "caption_3", "caption_4", "caption_5"],
         extant_sound_id_csv="fsd_ids_to_use.txt",  # set to None to skip
-        force_rebuild_fulls=False,
+        force_rebuild_fulls=True,
     )
     print(outputs)
 
