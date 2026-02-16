@@ -35,7 +35,7 @@ def load_json_data_from_directory(directory_path):
                 for item in data_list:
                     if "id" in item and "caption" in item:
                         if _check_dupes:
-                            if item["id"] in id_list:
+                            if item["id"] in id_list: # SKIP if also in freesound stuff from wavcaps
                                 continue
                             else:
                                 records.append({
