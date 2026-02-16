@@ -51,8 +51,9 @@ def combine_csvs(root_dir: str | Path, glob_pattern: str, out_name: str, force: 
         try:
             df = pd.read_csv(f, low_memory=False,encoding='ISO-8859-1')
             dfs.append(df)
-        except:
-            print(f)
+        except Exception as e:
+            print(f"ERROR ENCOUNTERED: {e}")
+            print(f"Offending file: {f}")
     full = pd.concat(dfs, ignore_index=True, sort=False)
     full.to_csv(out_path, index=False)
     return full
