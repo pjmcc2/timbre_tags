@@ -45,8 +45,10 @@ def combine_csvs(root_dir: str | Path, glob_pattern: str, out_name: str, force: 
     files = _find_csvs(root, glob_pattern)
     if not files:
         raise FileNotFoundError(f"No CSVs matched {glob_pattern} under {root}")
-
-    dfs = [pd.read_csv(f, low_memory=False) for f in files]
+    try:
+        dfs = [pd.read_csv(f, low_memory=False) for f in files]
+    except:
+        print(f)
     full = pd.concat(dfs, ignore_index=True, sort=False)
     full.to_csv(out_path, index=False)
     return full
