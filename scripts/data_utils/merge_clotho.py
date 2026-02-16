@@ -223,8 +223,8 @@ if __name__ == "__main__":
     # Example usage — edit paths as needed:
     outputs = run_pipeline(
         root_dir="~/hpc_share/clotho",
-        captions_glob="**/*captions*.csv",
-        metadata_glob="**/*metadata*.csv",
+        captions_glob="*captions*.csv",
+        metadata_glob="*metadata*.csv",
         merge_keys=["file_name"],
         caption_cols=["caption_1", "caption_2", "caption_3", "caption_4", "caption_5"],
         extant_sound_id_csv="fsd_ids_to_use.txt",  # set to None to skip
