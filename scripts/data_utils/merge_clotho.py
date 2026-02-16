@@ -49,7 +49,7 @@ def combine_csvs(root_dir: str | Path, glob_pattern: str, out_name: str, force: 
     dfs = []
     for f in files:
         try:
-            df = pd.read_csv(f, low_memory=False)
+            df = pd.read_csv(f, low_memory=False,encoding='ISO-8859-1')
             dfs.append(df)
         except:
             print(f)
