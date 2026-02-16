@@ -224,7 +224,7 @@ def run_pipeline(
 if __name__ == "__main__":
     # Example usage — edit paths as needed:
     outputs = run_pipeline(
-        root_dir="~/hpc_share/clotho",
+        root_dir="/nfs/hpc/share/mccabepe/clotho",
         captions_glob="*captions*.csv",
         metadata_glob="*metadata*.csv",
         merge_keys=["file_name"],
