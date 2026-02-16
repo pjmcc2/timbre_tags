@@ -224,6 +224,8 @@ def run_pipeline(
     if extant_sound_id_csv:
         overlap_ids, filtered_full, filtered_one_col = filter_by_extant_sound_ids(long_with_ids, extant_sound_id_csv)
         overlap_ids.to_csv(root / DUPLICATE_IDS_OUT, index=False)
+        filtered_full.to_csv(root / FILTERED_FRAME_OUT,index=False)
+        
         filtered_one_col.to_csv(root / ONE_COL_FINAL_OUT, index=False)
 
         result["duplicates_vs_extant_ids"] = str(root / DUPLICATE_IDS_OUT)
