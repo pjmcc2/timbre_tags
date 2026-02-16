@@ -27,6 +27,8 @@ DUPLICATE_IDS_OUT = "duplicates_vs_extant_ids.csv"
 # ----------------- HELPERS -----------------
 
 def _find_csvs(root: Path, glob_pattern: str) -> List[Path]:
+    print(root)
+    print(glob_pattern)
     return [p for p in root.glob(glob_pattern) if p.is_file() and p.suffix.lower() == ".csv"]
 
 
