@@ -8,8 +8,8 @@ import pandas as pd
 
 
 # ----------------- CONFIG (matches your schema) -----------------
-CAPTIONS_GLOB = "**/*captions*.csv"
-METADATA_GLOB = "**/*metadata*.csv"
+CAPTIONS_GLOB = "*captions*.csv"
+METADATA_GLOB = "*metadata*.csv"
 
 MERGE_KEYS: Sequence[str] = ["file_name"]  # explicit merge key
 CAPTION_COLS: Sequence[str] = ["caption_1", "caption_2", "caption_3", "caption_4", "caption_5"]
