@@ -1,7 +1,9 @@
-from data.utils.embed_clotho import find_wavs_df
+from data.utils.embed_clotho import main
 import pandas as pd
 import os
 import json
+from src.load_dataset import _batch_encode_audio_paths,_batch_encode_text_data,_load_clap
+import torch
 
 
 def load_json_data_from_directory(directory_path):
@@ -28,7 +30,10 @@ def load_json_data_from_directory(directory_path):
     return pd.DataFrame(records)
 
 
-def main(root_dir,out_path):
-
-    audio_paths = find_wavs_df(root_dir)
-    caption_df = load_json_data_from_directory(root_dir)
+if __name__ == "__main__":
+    sb_caption_df = load_json_data_from_directory("/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible")
+    sb_caption_df.to_csv("/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible/caption_id_name.csv")
+    main("/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible/soundbible_audio",
+         "/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible/caption_id_name.csv",
+         "data/processed/clotho/sb_clap_embeddings.pickle")
+    
