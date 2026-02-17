@@ -11,7 +11,7 @@
 
 module load slurm
 source env/bin/activate
-python train_no_audio.py
+python data/utils/embed_wavcaps.py
 
 # arguments for train_text_classifier: C,L,M
 

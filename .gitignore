@@ -3,6 +3,8 @@ data/__pycache__
 data/processed/wavcaps
 data/processed/clotho
 data/processed/mock_dataset.pickle
+data/processed/__pycache__
+data/utils/__pycache__
 .cache
 .__pycache__
 .ipynb_checkpoints
@@ -11,6 +13,9 @@ src/timbral_models
 scripts/gen.err
 scripts/gen.out
 scripts/scratch_2.py
+scripts/__pycache__
+src/__pycache__
+
 .pytest_cache
 text.txt
 scratch.py
