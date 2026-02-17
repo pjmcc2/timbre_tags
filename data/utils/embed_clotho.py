@@ -9,6 +9,9 @@ from src.load_dataset import _batch_encode_audio_paths
 import torch
 import pickle
 
+import soundfile as sf
+
+
 
 
 def find_wavs_df(root_dir: str | Path) -> pd.DataFrame:
@@ -110,6 +113,24 @@ def prepare_matches(
     return matched_df, missing_df, extras_df
 
 
+
+ 
+def is_valid_wav(path: str | Path) -> bool:
+    try:
+        with sf.SoundFile(str(path)) as f:
+            # Optionally read a small chunk to ensure data section is sane
+            _ = f.read(frames=min(len(f), 1024))
+        return True
+    except Exception:
+        return False
+
+def filter_valid_audio(df: pd.DataFrame, path_col: str = "path") -> tuple[pd.DataFrame, pd.DataFrame]:
+    df = df.copy()
+    mask = df[path_col].apply(is_valid_wav)
+    return df[mask].reset_index(drop=True), df[~mask].reset_index(drop=True)
+
+
+
 def embed_clotho(matched_df,path_col,caption_col):
     """
     embeds data with CLAP.
@@ -144,9 +165,11 @@ def main(root_dir,existing_df_path,out_path,save=True):
         existing_name_col="file_name",
     )
     print("Lengths of matched, missing, extra: ", len(matched_df),len(missing_df), len(extras_df))
+    matched_df_valid, matched_df_invalid = filter_valid_audio(matched_df, path_col="path")
+    print(f"Valid WAVs: {len(matched_df_valid)}, Invalid WAVs dropped: {len(matched_df_invalid)}")
 
     
-    embeddings = embed_clotho(matched_df, "path", "caption") # tuple of text,audio embeddings
+    embeddings = embed_clotho(matched_df_valid, "path", "caption") # tuple of text,audio embeddings
 
     if save:
         with open(out_path,"wb") as f:

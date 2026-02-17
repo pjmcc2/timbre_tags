@@ -6,11 +6,11 @@ import numpy as np
 import torch
 from src.torch_classes import embDataset, Projection
 from tqdm import tqdm
-from src.calc_metrics import calc_dist_metrics,calc_rep_metrics
+from src.calc_metrics import calc_dist_metrics,calc_rep_metrics,cosine_sim
 
 NOISE_VARIANCE = 0.023023764
 
-def main(noisy=False,compute_training_stats=False):
+def train_model(noisy=False,compute_training_stats=False):
 
     # Load data
     #open clotho
@@ -35,8 +35,8 @@ def main(noisy=False,compute_training_stats=False):
 
     #train loop
     train_loss = []
-    if compute_training_stats:
-        train_stats = []    
+    
+    train_stats = []    
 
     batch_size = 128
     epochs = 250 # TODO change
@@ -69,21 +69,31 @@ def main(noisy=False,compute_training_stats=False):
         if compute_training_stats:
             with torch.no_grad():
                 train_stats.append((calc_dist_metrics(X,outputs / outputs.norm(2,dim=1, keepdim=True)),
-                                    calc_rep_metrics()))
+                                    
+                                    calc_rep_metrics(X,outputs / outputs.norm(2,dim=1, keepdim=True),y,supervised=True)))
         
         
+    return model, train_loss, train_stats
      
 
     # store training logs?
 
     # store model
 
-    
+def save_model(model, out_path):
+    # TODO
+    pass
 
+def model_eda():
+    # TODO
+    pass
+
+def main():
+    # TODO
+    pass
 
 if __name__ =="__main__":
-
-    # parse args
+    main()
     
 
 
