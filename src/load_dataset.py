@@ -62,7 +62,7 @@ def _batch_encode_text_data(
 def _batch_encode_audio_paths(audio_path_list: List[str],clap: laion_clap.CLAP_Module,batch_size: int = 32
      ) -> np.ndarray:
     res = []
-    for i in range(0, len(audio_path_list), batch_size):
+    for i in tqdm(range(0, len(audio_path_list), batch_size)):
             with torch.no_grad():
                 res.append(clap.get_audio_embedding_from_filelist(audio_path_list[i:i+batch_size]))
                 torch.cuda.empty_cache()
