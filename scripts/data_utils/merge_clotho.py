@@ -244,7 +244,7 @@ if __name__ == "__main__":
         merge_keys=["file_name"],
         caption_cols=["caption_1", "caption_2", "caption_3", "caption_4", "caption_5"],
         extant_sound_id_csv="fsd_ids_to_use.txt",  # set to None to skip
-        force_rebuild_fulls=True,
+        force_rebuild_fulls=False,
     )
     print(outputs)
 

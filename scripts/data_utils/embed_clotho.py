@@ -4,6 +4,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Tuple
 import pandas as pd
+from src.load_dataset import _batch_encode_text_data, _load_clap
+from src.load_dataset import _batch_encode_audio_paths
+import torch
+import pickle
+
 
 
 def find_wavs_df(root_dir: str | Path) -> pd.DataFrame:
@@ -88,7 +93,7 @@ def prepare_matches(
 
     # Matched (inner join)
     matched_df = existing.merge(
-        found.drop(columns=["stem"]),  # keep "name" with .wav to preserve true name
+        found,  # keep "name" with .wav to preserve true name
         on="__key",
         how="inner",
         suffixes=("", "_found"),
@@ -105,22 +110,23 @@ def prepare_matches(
     return matched_df, missing_df, extras_df
 
 
-def process_results(matched_df: pd.DataFrame, missing_df: pd.DataFrame, extras_df: pd.DataFrame) -> None:
+def embed_clotho(matched_df,path_col,caption_col):
     """
-    Black box: replace with your downstream logic.
-    For now, we’ll just print some quick stats.
+    embeds data with CLAP.
     """
-    print(f"Matched rows: {len(matched_df)}")
-    print(f"Missing in filesystem: {len(missing_df)}")
-    print(f"Extra .wav files (not listed): {len(extras_df)}")
-    # TODO: replace with real logic, e.g.:
-    # my_downstream_fn(matched_df, missing_df, extras_df)
+    clap = _load_clap(device="cuda" if torch.cuda.is_available() else "cpu")
+    audio_file_paths = matched_df[path_col].to_list()
+    captions = matched_df[caption_col].to_list()
+    text_embeddings = _batch_encode_text_data(captions,clap)
+    audio_embeddings = _batch_encode_audio_paths(audio_file_paths,clap)
+
+    return (text_embeddings,audio_embeddings)
 
 
-def main():
+def main(out_path,save=True):
     # === Example usage ===
     # 1) Find all wavs
-    root_dir = "path/to/your/audio/root"  # e.g., "../data/audio"
+    root_dir = "/nfs/hpc/share/mccabepe/clotho" 
     found_df = find_wavs_df(root_dir)
 
     # 2) Load or use your existing DataFrame that has the file names.
@@ -129,36 +135,26 @@ def main():
     # existing_df = pd.read_csv("path/to/filelist.csv")
     #
     # For demonstration, let's mock one up:
-    existing_df = pd.DataFrame(
-        {
-            "file_name": ["clip01", "clip02.wav", "clip03", "does_not_exist"],
-            "label": ["A", "B", "C", "D"],  # some extra columns you might have
-        }
-    )
-
+    existing_df = pd.read_csv("/nfs/npc/share/mccabepe/clotho/clotho_filtered_full.csv")
+    
     # 3) Prepare matched/filtered/merged sets
     matched_df, missing_df, extras_df = prepare_matches(
         found_df=found_df,
         existing_df=existing_df,
         existing_name_col="file_name",
     )
+    print("Lengths of matched, missing, extra: ", len(matched_df),len(missing_df), len(extras_df))
 
-    # 4) Hand off to your black box
-    process_results(matched_df, missing_df, extras_df)
+    
+    embeddings = embed_clotho(matched_df, "path", "caption") # tuple of text,audio embeddings
+
+    if save:
+        with open(out_path,"wb") as f:
+            pickle.dump(embeddings,f)
+    else:
+        print(embeddings)
 
 
 if __name__ == "__main__":
-    main()
+    main("data/processed/clotho/clotho_clap_embeddings.pickle")
 
-
-
-
-def embed_clotho(audio_paths,captions,out_path=None):
-
-
-
-
-def test_embedding_correctness():
-    # sample files
-    # do they line up after embedding?
-    return sample_dataset
