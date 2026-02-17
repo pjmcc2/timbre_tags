@@ -19,11 +19,11 @@ def load_json_data_from_directory(directory_path):
                 
                 # Now iterate over the list of dicts
                 for item in data_list:
-                    if "id" in item and "caption" in item and "file_name" in item:
+                    if "id" in item and "caption" in item and "title" in item:
 
                         records.append({
                         "id": item["id"],
-                        "file_name": item["file_name"],
+                        "file_name": item["title"],
                         "caption": item["caption"]
                     })
 
