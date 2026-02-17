@@ -135,7 +135,7 @@ def main(out_path,save=True):
     # existing_df = pd.read_csv("path/to/filelist.csv")
     #
     # For demonstration, let's mock one up:
-    existing_df = pd.read_csv("/nfs/npc/share/mccabepe/clotho/clotho_filtered_full.csv")
+    existing_df = pd.read_csv("/nfs/hpc/share/mccabepe/clotho/clotho_filtered_full.csv")
     
     # 3) Prepare matched/filtered/merged sets
     matched_df, missing_df, extras_df = prepare_matches(
