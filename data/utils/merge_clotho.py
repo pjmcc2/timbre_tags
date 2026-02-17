@@ -129,8 +129,8 @@ def captions_wide_to_long_with_ids(
     # Optional: drop exact duplicate captions regardless of which file_id they came from
     long = long.drop_duplicates(subset=[out_caption_col]).reset_index(drop=True)
 
-    # Keep only IDs + caption
-    return long.loc[:, list(ids) + [out_caption_col]].reset_index(drop=True)
+    
+    return long
 
 
 def filter_by_extant_sound_ids(
@@ -214,7 +214,7 @@ def run_pipeline(
         "metadata_full": str(root / FULL_METADATA_OUT),
         "merged_full": str(root / MERGED_FULL_OUT),
         "id_map": str(root / ID_MAP_OUT),
-        "one_column_captions": str(root / ONE_COL_CAPTIONS),
+        "one_caption_column_full": str(root / ONE_COL_CAPTIONS),
         "duplicates_vs_extant_ids": None,
         "filtered dataframe":None,
         "one_column_captions_minus_extant": None,

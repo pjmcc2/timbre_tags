@@ -123,10 +123,9 @@ def embed_clotho(matched_df,path_col,caption_col):
     return (text_embeddings,audio_embeddings)
 
 
-def main(out_path,save=True):
+def main(root_dir,existing_df_path,out_path,save=True):
     # === Example usage ===
     # 1) Find all wavs
-    root_dir = "/nfs/hpc/share/mccabepe/clotho" 
     found_df = find_wavs_df(root_dir)
 
     # 2) Load or use your existing DataFrame that has the file names.
@@ -135,7 +134,7 @@ def main(out_path,save=True):
     # existing_df = pd.read_csv("path/to/filelist.csv")
     #
     # For demonstration, let's mock one up:
-    existing_df = pd.read_csv("/nfs/hpc/share/mccabepe/clotho/clotho_filtered_full.csv")
+    existing_df = pd.read_csv(existing_df_path)
     
     # 3) Prepare matched/filtered/merged sets
     matched_df, missing_df, extras_df = prepare_matches(
@@ -156,5 +155,5 @@ def main(out_path,save=True):
 
 
 if __name__ == "__main__":
-    main("data/processed/clotho/clotho_clap_embeddings.pickle")
+    main("/nfs/hpc/share/mccabepe/clotho","/nfs/hpc/share/mccabepe/clotho/clotho_filtered_full.csv", "data/processed/clotho/clotho_clap_embeddings.pickle")
 
