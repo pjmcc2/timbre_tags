@@ -32,7 +32,7 @@ def load_json_data_from_directory(directory_path):
 
 if __name__ == "__main__":
     sb_caption_df = load_json_data_from_directory("/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible")
-    sb_caption_df.to_csv("/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible/caption_id_name.csv")
+    sb_caption_df.to_csv("/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible/caption_id_name.csv",index=False)
     main("/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible/soundbible_audio",
          "/nfs/guille/eecs_research/soundbendor/datasets/sounds_and_noise/wavcaps/temp_soundbible/caption_id_name.csv",
          "data/processed/clotho/sb_clap_embeddings.pickle")
