@@ -206,7 +206,7 @@ def run_pipeline(
     long_with_ids = captions_wide_to_long_with_ids(merged, caption_cols=caption_cols, id_cols=("file_name", "sound_id"))
 
     # 6: write one-column (pre-filter) for reference
-    one_col = long_with_ids.loc[:, ["caption"]].drop_duplicates().reset_index(drop=True)
+    one_col = long_with_ids
     one_col.to_csv(root / ONE_COL_CAPTIONS, index=False)
 
     result = {
