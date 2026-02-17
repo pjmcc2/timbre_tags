@@ -155,5 +155,5 @@ def main(root_dir,existing_df_path,out_path,save=True):
 
 
 if __name__ == "__main__":
-    main("/nfs/hpc/share/mccabepe/clotho","/nfs/hpc/share/mccabepe/clotho/clotho_filtered_full.csv", "data/processed/clotho/clotho_clap_embeddings.pickle")
+    main("/nfs/hpc/share/mccabepe/clotho","/nfs/hpc/share/mccabepe/clotho/captions_one_column.csv", "data/processed/clotho/clotho_clap_embeddings.pickle")
 
