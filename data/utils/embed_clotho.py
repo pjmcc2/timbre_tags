@@ -116,6 +116,7 @@ def embed_clotho(matched_df,path_col,caption_col):
     """
     clap = _load_clap(device="cuda" if torch.cuda.is_available() else "cpu")
     audio_file_paths = matched_df[path_col].to_list()
+    audio_file_paths = [str(p) for p in audio_file_paths]
     captions = matched_df[caption_col].to_list()
     text_embeddings = _batch_encode_text_data(captions,clap)
     audio_embeddings = _batch_encode_audio_paths(audio_file_paths,clap)
