@@ -177,7 +177,7 @@ def save_model_state(model: torch.nn.Module, out_path: str, overwrite: bool = Fa
 def main():
     parser = argparse.ArgumentParser(description="Train a projection model on embeddings.")
     parser.add_argument("--clotho_path", default="data/processed/clotho/clotho_clap_embeddings.pickle")
-    parser.add_argument("--sb_path", default="data/processed/soundbible/sb_clap_embeddings.pickle")
+    parser.add_argument("--sb_path", default="data/processed/clotho/sb_clap_embeddings.pickle")
     parser.add_argument("--epochs", type=int, default=250)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--lr", type=float, default=1e-3)
