@@ -6,8 +6,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem-per-gpu=15G
 #SBATCH --time=23:59:59
-#SBATCH -o scripts/sbatch.out
-#SBATCH -e scripts/sbatch.err
+#SBATCH -o sbres.out
+#SBATCH -e sbres.err
 
 module load slurm
 source env/bin/activate
