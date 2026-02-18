@@ -11,7 +11,7 @@
 
 module load slurm
 source env/bin/activate
-python data/utils/embed_wavcaps.py
+python -m data.utils.embed_wavcaps --dataset_name=ac
 
 # arguments for train_text_classifier: C,L,M
 

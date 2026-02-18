@@ -19,7 +19,7 @@ def load_json_data_from_directory(directory_path):
     for filename in os.listdir(directory_path):
         if filename == "fsd_final.json":
             _check_dupes = True
-            ac_id_list = pd.read_csv("fsd_ids_to_use.txt").to_list()
+            ac_id_list = pd.read_csv("fsd_ids_to_use.txt")["sound_id"].to_list()
             clotho_id_df = pd.read_csv("/nfs/hpc/share/mccabepe/clotho/clotho_filtered_full.csv")
             clotho_id_list = clotho_id_df.sound_id.to_list()
             
@@ -34,7 +34,7 @@ def load_json_data_from_directory(directory_path):
                 data_list = content.get("data", [])
                 
                 # Now iterate over the list of dicts
-                for item in data_list:
+                for item in tqdm(data_list):
                     if "id" in item and "caption" in item:
                         if _check_dupes:
                             if item["id"] in ac_id_list or item["id"] in clotho_id_list: # SKIP if also in freesound stuff from wavcaps
