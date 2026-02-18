@@ -75,9 +75,10 @@ def bridge_gap(data,config,rng=None):
         mean = config["shared"]["noise_params"]["mean"]
         
         sigma = config["shared"]["noise_params"]["std"]
-        # TODO implement covariance
+        
         data = _add_noise(data,mean,sigma,rng)
-
+        # TODO: add: 
+        # data = np.vstack([data,_add_noise(data,mean,sigma,rng))
 
     if config["shared"]["normalize"]:
         if method == "c2":

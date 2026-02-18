@@ -53,6 +53,7 @@ def run_experiment(config,debug=False):
     model = load_model.load_model(config)
 
     X,y,_ = load_dataset.load_train_dataset(config,debug=debug)
+    
     X_val, y_val,_  = load_dataset.load_val_dataset(config)
 
     if config["shared"]["many_noise"]:
