@@ -162,7 +162,7 @@ def calc_rep_metrics(A, A2, B, supervised=False): # AI-improved code
 
     #res["self_ndcg"] = ndcg_score(orig_self + 1, trans_self)
     res["self_ndcg"] = get_ndcg(orig_self, trans_self)
-    res["self_consistency"] = get_consistency(orig_self, trans_self)
+    res["self_consistency"] = get_consistency_torch(orig_self, trans_self)
 
     # free memory early
     del trans_self
@@ -172,7 +172,7 @@ def calc_rep_metrics(A, A2, B, supervised=False): # AI-improved code
 
     #res["pseudo_ndcg"] = ndcg_score(orig_self + 1, orig_trans)
     res["pseudo_ndcg"] = get_ndcg(orig_self, orig_trans)
-    res["pseudo_consistency"] = get_consistency(orig_self, orig_trans)
+    res["pseudo_consistency"] = get_consistency_torch(orig_self, orig_trans)
 
     del orig_self
     del orig_trans
@@ -183,7 +183,7 @@ def calc_rep_metrics(A, A2, B, supervised=False): # AI-improved code
 
     #res["cross_ndcg"] = ndcg_score(orig_cross + 1, trans_cross)
     res["cross_ndcg"] = get_ndcg(orig_cross, trans_cross)
-    res["cross_consistency"] = get_consistency(orig_cross, trans_cross)
+    res["cross_consistency"] = get_consistency_torch(orig_cross, trans_cross)
 
     del orig_cross
     del trans_cross
