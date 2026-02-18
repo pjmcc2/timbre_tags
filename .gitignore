@@ -5,6 +5,7 @@ data/processed/clotho
 data/processed/mock_dataset.pickle
 data/processed/__pycache__
 data/utils/__pycache__
+data/models
 .cache
 .__pycache__
 .ipynb_checkpoints
