@@ -6,7 +6,9 @@ import numpy as np
 import torch
 from src.torch_classes import embDataset, Projection
 from tqdm import tqdm
-from src.calc_metrics import calc_dist_metrics,calc_rep_metrics,cosine_sim
+from src.calc_metrics import calc_dist_metrics,calc_rep_metrics
+import os
+
 
 NOISE_VARIANCE = 0.023023764
 
@@ -14,10 +16,10 @@ def train_model(noisy=False,compute_training_stats=False):
 
     # Load data
     #open clotho
-    with open("data/processed/clotho/","rb") as f:
+    with open("data/processed/clotho/clotho_clap_embedding.pickle","rb") as f:
         c_t_embs, c_a_embs = pickle.load(f)
     #open soundbible
-    with open("data/processed/clotho/sb_embeddings.pickle","rb") as f:
+    with open("data/processed/clotho/sb_clap_embeddings.pickle","rb") as f:
         sb_t_embs, sb_a_embs = pickle.load(f)
     #combine
     total_t_embs = np.vstack([c_t_embs,sb_t_embs])
@@ -28,7 +30,7 @@ def train_model(noisy=False,compute_training_stats=False):
 
     #create pytorch dataloader
     emb_dataset = embDataset(total_t_embs,total_a_embs)
-    dataloader = torch.data.utils.DataLoader()
+    
     model = Projection(dim=total_t_embs.shape[1])
     
      #single-time noise add?
@@ -76,20 +78,25 @@ def train_model(noisy=False,compute_training_stats=False):
     return model, train_loss, train_stats
      
 
-    # store training logs?
-
-    # store model
 
 def save_model(model, out_path):
-    # TODO
-    pass
+    if os.path.exists(out_path):
+        response = input("File already exists, overwrite? Y/n"):
+        if response != "Y":
+            exit(1)
+    else:
+        with open(out_path,"wb") as f:
+            pickle.dump(model,f)
+    return 
 
-def model_eda():
-    # TODO
-    pass
 
-def main():
-    # TODO
+
+def main(model_out_path=None, noisy=False, calc_stats=False,log_path=None):
+    
+    
+    # store training logs?
+    train_stats.to_csv()
+    # store model
     pass
 
 if __name__ =="__main__":
