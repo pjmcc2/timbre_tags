@@ -1,6 +1,6 @@
 
 # AI-improved Code
-# train_projection.py
+
 import argparse
 import json
 import math
@@ -71,7 +71,7 @@ def train_model(
     # Model — ensure out_dim matches audio embedding size
     in_dim = total_t_embs.shape[1]
     out_dim = total_a_embs.shape[1]
-    model = NonLinearProjection(in_dim, out_dim).to(device)
+    model = NonLinearProjection(in_dim).to(device)
     model.train()
 
     data_loader = torch.utils.data.DataLoader(
