@@ -13,7 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from src.torch_classes import embDataset, Projection
+from src.torch_classes import embDataset, NonLinearProjection
 from src.calc_metrics import calc_dist_metrics, calc_rep_metrics
 
 
@@ -71,7 +71,7 @@ def train_model(
     # Model — ensure out_dim matches audio embedding size
     in_dim = total_t_embs.shape[1]
     out_dim = total_a_embs.shape[1]
-    model = Projection(in_dim, out_dim).to(device)
+    model = NonLinearProjection(in_dim, out_dim).to(device)
     model.train()
 
     data_loader = torch.utils.data.DataLoader(
