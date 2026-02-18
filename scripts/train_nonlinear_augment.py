@@ -70,7 +70,6 @@ def train_model(
 
     # Model — ensure out_dim matches audio embedding size
     in_dim = total_t_embs.shape[1]
-    out_dim = total_a_embs.shape[1]
     model = NonLinearProjection(in_dim).to(device)
     model.train()
 
@@ -87,7 +86,7 @@ def train_model(
     optim = torch.optim.AdamW(model.parameters(), lr=lr)
 
     epoch_logs = []
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
         running_loss = 0.0
         n_batches = 0
 
