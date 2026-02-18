@@ -101,8 +101,8 @@ def get_OT_l2loss(A,B):
 
 def get_mean_dist(A,B):
   mean_vec = np.mean(A-B,axis=0)
-  return np.sqrt(np.linalg.vector_norm(mean_vec,axis=0))
-
+  # return np.sqrt(np.linalg.vector_norm(mean_vec,axis=0))
+  return np.sqrt(np.linalg.norm(mean_vec,axis=0))
 
 
 def get_lin_sep(X_1,X_2,reg_strength=1.0):
