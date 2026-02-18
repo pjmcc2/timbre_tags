@@ -24,12 +24,12 @@ def train_iterative_model(X,y,model,config,x_val,y_val,rng=None):
     return model, mid_training_res
 
 def eval_model(X_train, x_test, y_train,y_test,model):
-    train_preds = model.predict(X_train)
+    train_preds = (model.predict(X_train) >= 0.5).astype(int)
     train_acc = accuracy_score(y_train,train_preds)
     train_f1 = f1_score(y_train,train_preds)
     train_preds = None
 
-    test_preds = model.predict(x_test)
+    test_preds = (model.predict(x_test) >= 0.5).astype(int)
     test_acc = accuracy_score(y_test,test_preds)
     test_f1 = f1_score(y_test,test_preds)
 

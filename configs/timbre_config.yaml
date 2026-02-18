@@ -59,11 +59,16 @@ augmentation:
   - "nothing"
   - "mean_shift"
   - "c2"
+  #- "linear"
+  #- "nonlinear"
+  #- "linear_noisy"
+  #- "nonlinear_noisy"
 
 models:
   - "ridge"
   #- "sgd"
-  # TODO: 2-layer MLP
-  # TODO: MEAN of pos class
+  #- TODO: "one_layer"
+  # TODO: "two_layer"
+
 
 

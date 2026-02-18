@@ -56,10 +56,11 @@ def run_experiment(config,debug=False):
     X_val, y_val,_  = load_dataset.load_val_dataset(config)
 
     if config["shared"]["many_noise"]:
-        assert config["model"] == "sgd"
+        assert config["model"] == "one_layer" or config["model"] == "two_layer" or config["model"] == "sgd"
         model, mid_training_res = train_model.train_iterative_model(X, y, model, config, X_val, y_val, rng=rng) 
         train_acc, train_f1, val_acc, val_f1 = zip(*mid_training_res)
-        print(val_f1)
+        #print(val_f1)
+
     else:
         X = augment_data.bridge_gap(X,config,rng)
     

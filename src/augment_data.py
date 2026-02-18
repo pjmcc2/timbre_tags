@@ -3,7 +3,7 @@ import torch
 import pandas as pd
 from sklearn.preprocessing import normalize
 import pickle
-
+from src.torch_classes import NonLinearProjection, Projection
 
 def _mean_shift(data):
     with open("/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/audiocommons/mean_total_a_emb.pickle","rb") as f:
@@ -28,6 +28,30 @@ def _add_noise(data,mean,std,rng):
 def c2(data):
     return data - np.mean(data,axis=0)
 
+def _project(data,method):
+    if method == "linear":
+        model = Projection(data.shape[1])
+        model.load_state_dict(torch.load("data/models/linear_no_noise_v1.pickle"))
+
+    elif method == "linear_noisy":
+        model = Projection(data.shape[1])
+        model.load_state_dict(torch.load("data/models/linear_noisy_v1.pickle"))
+
+    elif method == "nonlinear":
+        model = NonLinearProjection(data.shape[1])
+        model.load_state_dict(torch.load("data/models/nonlinear_no_noise_v1.pickle"))
+
+    elif method == "nonlinear_noisy":
+        model = NonLinearProjection(data.shape[1])
+        model.load_state_dict(torch.load("data/models/nonlinear_noisy_v1.pickle"))
+    
+    else:
+        raise ValueError(f"unsupported method: {method}")
+
+    model.eval()
+    model.to("cpu")
+    with torch.no_grad():
+        return _normalize(model(data))
 
 def bridge_gap(data,config,rng=None):
     method = config["augmentation"]
@@ -38,6 +62,8 @@ def bridge_gap(data,config,rng=None):
         data = c2(data)
     elif method == 'nothing':
         data = data
+    elif method == "linear" or method == "linear_noisy" or method == "nonlinear" or method == "nonlinear_noisy":
+        data = _project(data,model=method)
     else:
         raise ValueError(f"method {method} not allowed.")
     
