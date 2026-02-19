@@ -24,7 +24,7 @@ shared:
     
   noise_iters: 200
   n_samples: 15000
-  many_noise: true
+  many_noise: false
   full_dataset: false
   add_noise: true
   normalize: true
@@ -65,8 +65,8 @@ augmentation:
  - "nonlinear_noisy"
 
 models:
-  #- "ridge"
-  - "sgd" 
+  - "ridge"
+  #- "sgd" 
   #- "one_layer"
   #- "two_layer"
 
