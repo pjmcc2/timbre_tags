@@ -63,7 +63,7 @@ def bridge_gap(data,config,rng=None):
     elif method == 'nothing':
         data = data
     elif method == "linear" or method == "linear_noisy" or method == "nonlinear" or method == "nonlinear_noisy":
-        data = _project(data,model=method)
+        data = _project(data,method)
     else:
         raise ValueError(f"method {method} not allowed.")
     
