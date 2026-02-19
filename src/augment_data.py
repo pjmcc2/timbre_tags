@@ -51,7 +51,7 @@ def _project(data,method):
     model.eval()
     model.to("cpu")
     with torch.no_grad():
-        return _normalize(model(data))
+        return _normalize(model(torch.tensor(data)))
 
 def bridge_gap(data,config,rng=None):
     method = config["augmentation"]
@@ -77,9 +77,7 @@ def bridge_gap(data,config,rng=None):
         sigma = config["shared"]["noise_params"]["std"]
         
         data = _add_noise(data,mean,sigma,rng)
-        # TODO: add: 
-        # data = np.vstack([data,_add_noise(data,mean,sigma,rng))
-
+        
     if config["shared"]["normalize"]:
         if method == "c2":
             pass

@@ -63,12 +63,14 @@ def run_experiment(config,debug=False):
         #print(val_f1)
 
     else:
-        X = augment_data.bridge_gap(X,config,rng)
-    
-        X_val = augment_data.process_val_data(X_val,config)        
-        model = train_model.train_model(X,y,model,config,rng=rng) 
+        X_aug = augment_data.bridge_gap(X,config,rng)
+        if len(X_aug) > len(X):
+            y = np.concatenate([y,y])
 
-        train_acc, train_f1, val_acc, val_f1  = train_model.eval_model(X,X_val,y,y_val,model)
+        X_val = augment_data.process_val_data(X_val,config)        
+        model = train_model.train_model(X_aug,y,model,config,rng=rng) 
+
+        train_acc, train_f1, val_acc, val_f1  = train_model.eval_model(X_aug,X_val,y,y_val,model)
 
     return train_acc, train_f1, val_acc, val_f1 
 

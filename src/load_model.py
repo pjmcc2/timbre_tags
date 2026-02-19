@@ -27,7 +27,7 @@ def load_model(config):
         )
 
     elif model_type == "one_layer":
-        model = MLPRegressor(
+        model = MLPClassifier(
             hidden_layer_sizes=(512,),
             activation="identity",
             alpha=0.0001,
@@ -38,7 +38,7 @@ def load_model(config):
         )
 
 
-    elif model == "two_layer":
+    elif model_type == "two_layer":
         model = MLPRegressor(
                     hidden_layer_sizes=(512,512),
                     activation="relu",
@@ -48,7 +48,7 @@ def load_model(config):
                     max_iter=250
                 )
 
-    elif model == "knn":
+    elif model_type == "knn":
         model = KNeighborsClassifier(
             n_neighbors=10,
             weights="distance",
