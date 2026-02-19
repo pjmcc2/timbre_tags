@@ -66,9 +66,12 @@ augmentation:
 
 models:
   #- "ridge"
-  - "sgd"
+  - "sgd" 
   #- "one_layer"
   #- "two_layer"
+
+  
+  #ignore
 
 
 
