@@ -31,19 +31,19 @@ def c2(data):
 def _project(data,method):
     if method == "linear":
         model = Projection(data.shape[1])
-        model.load_state_dict(torch.load("data/models/linear_no_noise_v1.pickle"))
+        model.load_state_dict(torch.load("data/models/linear_no_noise_v1.pickle",map_location=torch.device('cpu')))
 
     elif method == "linear_noisy":
         model = Projection(data.shape[1])
-        model.load_state_dict(torch.load("data/models/linear_noisy_v1.pickle"))
+        model.load_state_dict(torch.load("data/models/linear_noisy_v1.pickle",map_location=torch.device('cpu')))
 
     elif method == "nonlinear":
         model = NonLinearProjection(data.shape[1])
-        model.load_state_dict(torch.load("data/models/nonlinear_no_noise_v1.pickle"))
+        model.load_state_dict(torch.load("data/models/nonlinear_no_noise_v1.pickle",map_location=torch.device('cpu')))
 
     elif method == "nonlinear_noisy":
         model = NonLinearProjection(data.shape[1])
-        model.load_state_dict(torch.load("data/models/nonlinear_noisy_v1.pickle"))
+        model.load_state_dict(torch.load("data/models/nonlinear_noisy_v1.pickle",map_location=torch.device('cpu')))
     
     else:
         raise ValueError(f"unsupported method: {method}")
