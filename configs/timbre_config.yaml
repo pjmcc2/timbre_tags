@@ -44,9 +44,9 @@ labels:
 
 datasets:
   - "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/llama/captions/synth_dataset_ONLY_AC_embs.pickle"
-  #- "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/wavcaps/wv_cap_precomputed_timbre_CLAP_ac.pickle"
-  #- "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/wavcaps/wv_cap_precomputed_timbre_SBERT_ac.pickle"
-  #- "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/noise/noise_ac.pickle"
+  - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/wavcaps/wv_cap_precomputed_timbre_CLAP_ac.pickle"
+  - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/wavcaps/wv_cap_precomputed_timbre_SBERT_ac.pickle"
+  - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/noise/noise_ac.pickle"
     # - "L+C"
     # - "L+S"
     # - "L+N"
@@ -56,19 +56,19 @@ datasets:
     #- "L+N+S"
 
 augmentation:
-  #- "nothing"
-  #- "mean_shift"
-  #- "c2"
-  - "linear"
-  #- "nonlinear"
-  #- "linear_noisy"
-  - "nonlinear_noisy"
+ - "nothing"
+ - "mean_shift"
+ - "c2"
+ - "linear"
+ - "nonlinear"
+ - "linear_noisy"
+ - "nonlinear_noisy"
 
 models:
-  #- "ridge"
-  - "sgd"
-  - "one_layer"
-  - "two_layer"
+  - "ridge"
+  #- "sgd"
+  #- "one_layer"
+  #- "two_layer"
 
 
 
