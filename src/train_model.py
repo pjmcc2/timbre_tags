@@ -17,9 +17,9 @@ def train_iterative_model(X,y,model,config,x_val,y_val,rng=None):
     try:
         model.partial_fit(X_aug,y,np.unique(y)) 
     except Exception as e:
-         print(f"Error:{e}")
-    finally:
-         model.partial_fit(X_aug,y)
+        print(f"Error:{e}")
+        model.partial_fit(X_aug,y)
+         
     mid_training_res = []
     for i in range(config["shared"]["noise_iters"] - 1):
         X_aug = bridge_gap(X,config,rng)
