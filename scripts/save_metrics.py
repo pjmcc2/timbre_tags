@@ -82,7 +82,7 @@ def load_wavcaps_sbert():
 
 
 def load_llm():
-    with open("/nfs/guille/eecs_research/soundbendor/mccabepe/llm_embs.pickle", "rb") as f:  # TODO
+    with open("/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/llama/captions/synth_dataset_ONLY_AC_embs.pickle", "rb") as f:
         llm, _ = pickle.load(f)
     return llm
 
@@ -93,15 +93,15 @@ def load_ac(version):
 
 
 def load_noise_text():
-    with open("data/processed/noise/noise_text_embeddings.pickle", "rb") as f:  # TODO
+    with open("/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/noise/noise_ac.pickle", "rb") as f:  # TODO
         noise_text, _ = pickle.load(f)
     return noise_text
 
 
 # ---- noise helpers ----
 
-def add_gaussian_noise(x, rng, sigma=0.1):
-    noise = rng.normal(loc=0.0, scale=sigma, size=x.shape)
+def add_gaussian_noise(x, rng, sigma=0.023023764):
+    noise = rng.normal(loc=x.mean(axis=0), scale=sigma, size=x.shape)
     return x + noise
 
 
