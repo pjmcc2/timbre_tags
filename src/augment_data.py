@@ -51,7 +51,7 @@ def _project(data,method):
     model.eval()
     model.to("cpu")
     with torch.no_grad():
-        return _normalize(model(torch.tensor(data)))
+        return _normalize(model(torch.Tensor(data)))
 
 def bridge_gap(data,config,rng=None):
     method = config["augmentation"]
