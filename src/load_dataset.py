@@ -240,8 +240,8 @@ def _check_path(config):
     # Define your base paths
     path_map = {
         "L":"/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/llama/captions/synth_dataset_ONLY_AC_embs.pickle",
-        "C": "/nfs/stak/users/mccabepe/timbre_tags/data/processed/wavcaps/wv_cap_precomputed_timbre_CLAP_ac.pickle",
-        "S": "/nfs/stak/users/mccabepe/timbre_tags/data/processed/wavcaps/wv_cap_precomputed_timbre_SBERT_ac.pickle",
+        "C": "/nfs/stak/users/mccabepe/timbre_tags/data/processed/wavcaps/wv_cap_precomputed_CLAP.pickle",
+        "S": "/nfs/stak/users/mccabepe/timbre_tags/data/processed/wavcaps/wv_cap_precomputed_SBERT.pickle",
         "N": "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/noise/noise_ac.pickle"
     }
 
