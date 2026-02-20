@@ -44,8 +44,8 @@ labels:
 
 datasets:
   - "/nfs/guille/eecs_research/soundbendor/mccabepe/timbre_tags/data/llama/captions/synth_dataset_ONLY_AC_embs.pickle"
-  - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/wavcaps/wv_cap_precomputed_timbre_CLAP_ac.pickle"
-  - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/wavcaps/wv_cap_precomputed_timbre_SBERT_ac.pickle"
+  - "/nfs/stak/users/mccabepe/timbre_tags/data/processed/wavcaps/wv_cap_precomputed_timbre_CLAP_ac.pickle"
+  - "/nfs/stak/users/mccabepe/timbre_tags/data/processedwavcaps/wv_cap_precomputed_timbre_SBERT_ac.pickle"
   - "/nfs/guille/eecs_research/soundbendor/mccabepe/evo2026/text_only_timbre_classification/data/processed/noise/noise_ac.pickle"
     # - "L+C"
     # - "L+S"
